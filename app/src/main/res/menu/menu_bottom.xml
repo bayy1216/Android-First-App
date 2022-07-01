@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/navigation_menu1"
+        android:icon="@android:drawable/ic_popup_reminder"
+        android:title="알림" />
+
+    <item
+        android:id="@+id/navigation_menu2"
+        android:icon="@android:drawable/ic_search_category_default"
+        android:title="검색" />
+
+    <item
+        android:id="@+id/navigation_menu3"
+        android:icon="@android:drawable/ic_menu_camera"
+        android:title="게시물" />
+    <item
+        android:id="@+id/navigation_menu4"
+        android:icon="@drawable/img"
+        android:title="설정" />
+
+</menu>

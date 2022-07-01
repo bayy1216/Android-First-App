@@ -1,0 +1,261 @@
+package com.noticepackage.noticesearch;
+
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.example.noticesearch.R;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.security.Key;
+import java.util.ArrayList;
+
+public class Menu1Fragment extends Fragment {
+
+    private AdView mAdView;
+
+    EditText textAlarm;
+    Button btnAlarm;
+    TextView text1;
+    MainActivity mainActivity;
+
+
+    RecyclerView recyclerView;
+    KeyWordAdapter keyWordAdapter;
+    ArrayList<KeyWord> keylist;
+
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        mainActivity = (MainActivity) getActivity();
+        super.onAttach(context);
+    }
+
+    @Nullable
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        ViewGroup rootview = (ViewGroup) inflater.inflate(R.layout.fragment_menu1, container,false);
+
+        btnAlarm = (Button) rootview.findViewById(R.id.btn_alarm_start);
+        textAlarm = (EditText) rootview.findViewById(R.id.alarm_keyword);
+        text1 = (TextView) rootview.findViewById(R.id.textView1);
+
+
+        recyclerView = (RecyclerView) rootview.findViewById(R.id.recyclerView_menu1);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(getContext().getApplicationContext(), LinearLayoutManager.VERTICAL,false);
+        recyclerView.setLayoutManager(layoutManager);
+
+        keylist = new ArrayList<>();
+        keyWordAdapter = new KeyWordAdapter(keylist,getContext().getApplicationContext());
+        recyclerView.setAdapter(keyWordAdapter);
+
+
+
+        MobileAds.initialize(getContext(), new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(InitializationStatus initializationStatus) {
+            }
+        });
+        mAdView = (AdView) rootview.findViewById(R.id.adVieww);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdView.loadAd(adRequest);
+
+        mAdView.setAdListener(new AdListener() {
+            @Override
+            public void onAdLoaded() {
+                Log.d("test","광고성공");
+                // Code to be executed when an ad finishes loading.
+            }
+
+            @Override
+            public void onAdFailedToLoad(LoadAdError adError) {
+                Log.d("test","광고실패");
+                // Code to be executed when an ad request fails.
+            }
+
+            @Override
+            public void onAdOpened() {
+                // Code to be executed when an ad opens an overlay that
+                // covers the screen.
+            }
+
+            @Override
+            public void onAdClicked() {
+                // Code to be executed when the user clicks on an ad.
+            }
+
+            @Override
+            public void onAdClosed() {
+                // Code to be executed when the user is about to return
+                // to the app after tapping on an ad.
+            }
+        });
+
+
+
+
+
+
+
+
+
+        try {
+            FileInputStream fis = getContext().openFileInput("keyWord_List.tmp");
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            keylist = (ArrayList<KeyWord>) ois.readObject();
+            keyWordAdapter.setList(keylist);
+
+
+            ois.close();
+
+        }catch(Exception e){
+            Log.d("test", "실패");
+        }
+
+
+
+
+
+
+
+
+
+        /*Intent xx= new Intent(getActivity(), MyReceiver.class);
+
+        AlarmManager alarmManager = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getContext(), 0, xx, 0);
+        //PendingIntent pendingIntent = PendingIntent.getBroadcast(getContext(), 0, xx, PendingIntent.FLAG_NO_CREATE);
+
+        if (pendingIntent != null && alarmManager != null) {
+            alarmManager.cancel(pendingIntent);
+        }*/
+
+
+
+
+
+
+        btnAlarm.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                keyWordAdapter.addKeyWord(new KeyWord(textAlarm.getText().toString()));
+                try {
+                    FileOutputStream fos = getContext().openFileOutput("keyWord_List.tmp", Context.MODE_PRIVATE);
+                    ObjectOutputStream oos = new ObjectOutputStream(fos);
+                    oos.writeObject(keylist);
+
+                    Log.d("test", "keyLsit 저장완료");
+                    oos.close();
+                }catch(Exception e){
+                    Log.d("test", "keyword실패");
+                }
+
+                if (mainActivity.mBundle != null)
+                {
+                    Bundle bundle = mainActivity.mBundle;
+                    String name = bundle.getString("name"); // 프래그먼트1에서 받아온 값 넣기
+                    text1.setText(name);
+                }
+/*
+                if(alarmManager!=null) {
+
+
+                    alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP,
+                            System.currentTimeMillis(),
+                            AlarmManager.INTERVAL_FIFTEEN_MINUTES, pendingIntent);
+                    Log.d("test","왜 안될까"+System.currentTimeMillis());
+                    Toast.makeText(getContext(), "왜 안될까", Toast.LENGTH_SHORT).show();
+                }
+                else{
+                    Log.d("test","null이라는데요");
+                }
+*/
+
+                //NetworkThread th = new NetworkThread();
+                //th.start();
+            }
+        });
+
+        keyWordAdapter.setOnItemClickListener(new KeyWordAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(KeyWordAdapter.ViewHolder holder, View view, int position) {
+                keyWordAdapter.removeData(position);
+                recyclerView.setAdapter(keyWordAdapter);
+            }
+        });
+
+
+        return rootview;
+    }
+
+
+
+
+
+
+
+    class NetworkThread extends Thread{
+        @Override
+        public void run() {
+            try{
+                //서버에접속
+                final Socket socket = new Socket("172.16.102.74",55555); //172.16.102.74
+
+                InputStream is = socket.getInputStream();
+                OutputStream os = socket.getOutputStream();
+                DataInputStream dis = new DataInputStream(is);
+                DataOutputStream dos = new DataOutputStream(os);
+
+                final int data1= dis.readInt();
+                final String str1=dis.readUTF();
+
+                dos.writeInt(200);
+                dos.writeUTF("클라이언트에서 보낸 문자");
+
+
+
+
+
+                text1.append("data1 :" + data1 + "str1 : "+str1);
+
+                socket.close();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+
+}

@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">컴학 공지사항 한눈에 보기</string>
+    <!-- TODO: Remove or change this placeholder text -->
+
+    <string name="admob_app_id">ca-app-pub-8155398896395175~9160362423</string>
+    <string name="banner_ad_unit_id">ca-app-pub-8155398896395175/3389160996</string>
+
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>

@@ -1,0 +1,26 @@
+package com.noticepackage.noticesearch;
+
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.util.Log;
+import android.widget.Toast;
+
+public class MyReceiver extends BroadcastReceiver {
+
+
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+
+        Toast.makeText(context, "알람~!!", Toast.LENGTH_SHORT).show();    // AVD 확인용
+        Log.e("test","알람입니다."+System.currentTimeMillis());    // 로그 확인용
+
+
+    }
+
+
+
+
+
+}

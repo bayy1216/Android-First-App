@@ -57,15 +57,17 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
             "https://swedu.knu.ac.kr/05_sub/09_sub.html",
             "https://swedu.knu.ac.kr/02_sub/04_sub.html"};
     private final String[] SWname={"sw중심대학지원산업","지역선도대학산업","경북디지털역량교육","소프트웨어교육원새소식","마일리지게시판","sw기초교육"};
+
     private final String[] KNUURL = {"https://www.knu.ac.kr/wbbs/wbbs/bbs/btin/list.action?bbs_cde=1&menu_idx=67",
                             "https://www.knu.ac.kr/wbbs/wbbs/bbs/btin/stdList.action?menu_idx=42"};
+    private final String[] KNUname={"경북대","경북대학사공지"};
 
-    private final String[] CSEname={"컴학","컴학-학사","컴학-심컴"};
+    private final String[] CSEname={"컴학","컴학-학사","컴학-심컴","컴학-학부인재"};
     private final String[] CSEURL ={"http://computer.knu.ac.kr/06_sub/02_sub.html",
             "http://computer.knu.ac.kr/06_sub/02_sub_2.html",
-            "http://computer.knu.ac.kr/06_sub/02_sub_3.html"};
+            "http://computer.knu.ac.kr/06_sub/02_sub_3.html","http://computer.knu.ac.kr/06_sub/04_sub.html"};
 
-    private final String[] KNUname={"경북대","경북대학사공지"};
+
     private int tempvalue;
     private int tempaAdder = 100/(12);
     public String dateControl="20220301";
@@ -181,18 +183,14 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                     Elements elements = doc.select("tbody tr");
 
                     for (Element elem : elements) {
-                        Element elementTitle = elem.select("td.l").first();
-                        dataTitle = elementTitle.text();
+                        dataTitle = elem.select("td.l").first().text();
                         viewPageUrl = elem.select("a").attr("abs:href");
-                        Element elementTime = elem.select("td").get(4);
-                        dataTime = elementTime.text();
-                        Element elementView = elem.select("td").get(5);
-                        dataView = elementView.text();
+                        dataTime = elem.select("td").get(4).text();
+                        dataView = elem.select("td").get(5).text();
                         String ss = dataTime.replaceAll("[^\\d]", "");
                         if (Integer.parseInt(ss) < Integer.parseInt(dateControl)) {
                             continue;
                         }
-
 
                         SearchData newAddData= new SearchData(dataTitle, dataTime, SWname[x], "조회수:" + dataView, viewPageUrl,0);
                         Message msg = new Message();
@@ -218,7 +216,6 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
 
 
                     for (Element elem : cseElements) {
-
                         dataTitle = elem.select("a").first().ownText();
                         viewPageUrl = elem.select("a").attr("abs:href");
                         dataTime = elem.select("td.bbs_date").first().text();
@@ -329,25 +326,20 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
             adapter.Deduplication();//저정하는데 sort하고 writeObjcet하고 충돌해서 임시로 일단 이렇게
             //해봤는데 일단 돌아가긴하는데 왜이런지는 잘 모르겠음(쓰레드에서)화면구성요소 접근한거가 작동이되는거
 
-
-            Log.d("test", "일단 저장하는 시작");
+            Log.d("test", "저장 시도");
             FileOutputStream fos = getContext().openFileOutput(savelist, Context.MODE_PRIVATE);
 
             // FileOutputStream fos = new FileOutputStream("myfile1.dat");
             ObjectOutputStream oos = new ObjectOutputStream(fos);
-            Log.d("test", "일단 저장하는 중");
 
             oos.writeObject(mlist);
-            Log.d("test", "일단 저장");
-
-
+            Log.d("test", "저장완료");
 
             DataOutputStream dos = new DataOutputStream(fos);
             dos.writeUTF(today);
             Log.d("test","today-save--"+today);
             oos.close();
             dos.close();
-
         }
         catch (Exception e) {
             Log.d("test","저장 실패");
@@ -364,7 +356,6 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
             ObjectInputStream ois = new ObjectInputStream(fis);
 
 
-            Log.d("test","mlist 불러오기 시도");
             mlist = (ArrayList<SearchData>) ois.readObject();
             Log.d("test","mlist 불러오기 성공");
 
@@ -391,14 +382,11 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
 
     @Override
     public void onRefresh() {
-
         //새로 고침 코드
         updateLayoutView();
 
         //새로 고침 완
         swipeRefreshLayout.setRefreshing(false);
-
-
     }
 
     // 당겨서 새로고침 했을 때 뷰 변경 메서드

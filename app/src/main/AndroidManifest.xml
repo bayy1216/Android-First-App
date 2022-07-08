@@ -6,9 +6,6 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
-
-
-
         android:allowBackup="true"
         android:icon="@mipmap/ic_main"
         android:label="@string/app_name"
@@ -16,10 +13,14 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NoticeSearch"
         android:usesCleartextTraffic="true">
+        <service
+            android:name="com.noticepackage.noticesearch.AlarmIntentService"
+            android:exported="false"></service>
+
         <receiver
             android:name="com.noticepackage.noticesearch.MyReceiver"
             android:enabled="true"
-            android:exported="true"></receiver>
+            android:exported="true" />
 
         <service
             android:name="com.noticepackage.noticesearch.UpdateService"
@@ -34,12 +35,10 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <!-- Sample AdMob app ID: ca-app-pub-3940256099942544~3347511713 /-->
+        </activity> <!-- Sample AdMob app ID: ca-app-pub-3940256099942544~3347511713 / -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="@string/admob_app_id" />
     </application>
 
 </manifest>

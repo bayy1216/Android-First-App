@@ -1,10 +1,14 @@
 package com.noticepackage.noticesearch;
 
 import android.app.AlarmManager;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -13,9 +17,11 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -39,7 +45,9 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.security.Key;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class Menu1Fragment extends Fragment {
 
@@ -55,6 +63,10 @@ public class Menu1Fragment extends Fragment {
     KeyWordAdapter keyWordAdapter;
     ArrayList<KeyWord> keylist;
 
+    long now =System.currentTimeMillis();
+    Date nowDate=new Date(now);
+    SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+    String today=sdf.format(nowDate);
 
     @Override
     public void onAttach(@NonNull Context context) {
@@ -124,12 +136,6 @@ public class Menu1Fragment extends Fragment {
 
 
 
-
-
-
-
-
-
         try {
             FileInputStream fis = getContext().openFileInput("keyWord_List.tmp");
             ObjectInputStream ois = new ObjectInputStream(fis);
@@ -138,9 +144,8 @@ public class Menu1Fragment extends Fragment {
 
 
             ois.close();
-
         }catch(Exception e){
-            Log.d("test", "실패");
+            Log.d("test", "keyList 열기 실패");
         }
 
 
@@ -151,17 +156,14 @@ public class Menu1Fragment extends Fragment {
 
 
 
-        /*Intent xx= new Intent(getActivity(), MyReceiver.class);
+        Intent xx= new Intent(getActivity(), MyReceiver.class);
 
         AlarmManager alarmManager = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(getContext(), 0, xx, 0);
         //PendingIntent pendingIntent = PendingIntent.getBroadcast(getContext(), 0, xx, PendingIntent.FLAG_NO_CREATE);
-
         if (pendingIntent != null && alarmManager != null) {
             alarmManager.cancel(pendingIntent);
-        }*/
-
-
+        }
 
 
 
@@ -169,7 +171,7 @@ public class Menu1Fragment extends Fragment {
         btnAlarm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                keyWordAdapter.addKeyWord(new KeyWord(textAlarm.getText().toString()));
+                keyWordAdapter.addKeyWord(new KeyWord(textAlarm.getText().toString(),today));
                 try {
                     FileOutputStream fos = getContext().openFileOutput("keyWord_List.tmp", Context.MODE_PRIVATE);
                     ObjectOutputStream oos = new ObjectOutputStream(fos);
@@ -187,20 +189,18 @@ public class Menu1Fragment extends Fragment {
                     String name = bundle.getString("name"); // 프래그먼트1에서 받아온 값 넣기
                     text1.setText(name);
                 }
-/*
+
                 if(alarmManager!=null) {
-
-
                     alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP,
                             System.currentTimeMillis(),
-                            AlarmManager.INTERVAL_FIFTEEN_MINUTES, pendingIntent);
-                    Log.d("test","왜 안될까"+System.currentTimeMillis());
-                    Toast.makeText(getContext(), "왜 안될까", Toast.LENGTH_SHORT).show();
+                            AlarmManager.INTERVAL_DAY, pendingIntent);
+                    Log.d("test","일단시작해보자"+System.currentTimeMillis());
+                    Toast.makeText(getContext(), "일단시작해보자", Toast.LENGTH_SHORT).show();
                 }
                 else{
                     Log.d("test","null이라는데요");
                 }
-*/
+
 
                 //NetworkThread th = new NetworkThread();
                 //th.start();
@@ -256,6 +256,27 @@ public class Menu1Fragment extends Fragment {
         }
     }
 
+    private static String CHANNEL_ID = "channel1";
+    private static String CHANNEL_NAME = "Channel1";
+    public void showNoti1(String input){
+        NotificationManager manger = (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
 
+        NotificationCompat.Builder builder = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            manger.createNotificationChannel(new NotificationChannel(
+                    CHANNEL_ID,
+                    CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_DEFAULT
+            ));
+            builder = new NotificationCompat.Builder(getActivity(),CHANNEL_ID);
+        }
+
+        builder.setContentTitle("간단알림");
+        builder.setContentText("새로운 글입니다 : "+input);
+        builder.setSmallIcon(android.R.drawable.ic_menu_view);
+
+        Notification noti = builder.build();
+        manger.notify(1,noti);
+    }
 
 }

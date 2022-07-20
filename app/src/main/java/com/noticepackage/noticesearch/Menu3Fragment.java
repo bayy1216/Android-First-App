@@ -20,6 +20,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.noticesearch.R;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -76,7 +81,6 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
 
 
 
-
     ProgressBar tempProgress;
 
 
@@ -115,9 +119,13 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
         swipeRefreshLayout.setOnRefreshListener(this);
 
 
-
-        loadCurrentGame();
-
+        try {
+            SearchSiteImproved s=new SearchSiteImproved();
+            s.start();
+        }catch(Exception e){
+            Log.d("tt","html에서 실패");
+            loadCurrentGame();
+        }
 
         try {
             FileInputStream fis1 = getContext().openFileInput("permission_save.tmp");
@@ -163,7 +171,44 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
         return rootview;
     }
 
+    class SearchSiteImproved extends Thread {
+        @Override
+        public void run() {
+            Document doc;
+            try {
+                doc = Jsoup.connect("http://13.209.154.237:58740/").get();
+                Elements elements = doc.select("tbody tr");
 
+                for (Element elem : elements) {
+                    dataTitle = elem.select("td.title").text();
+                    viewPageUrl = elem.select("td.href").text();
+                    dataTime = elem.select("td.date").text();
+                    dataView = elem.select("td.hit").text();
+                    String site=elem.select("td.name").text();
+
+
+                    SearchData newAddData = new SearchData(dataTitle, dataTime, site, "조회수:" + dataView, viewPageUrl, 0);
+                    Message msg = new Message();
+                    msg.what=1;
+                    msg.obj=newAddData;
+                    addDataHandler.sendMessage(msg);
+
+
+                    try {
+                        Thread.sleep(1);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+                saveCurrentGame();
+                addDataHandler.sendEmptyMessage(2);
+                Log.d("test","html에서 쓰레드 종료!!!");
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
 
 
     class SearchSiteTherad extends Thread{
@@ -218,6 +263,7 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                     for (Element elem : cseElements) {
                         dataTitle = elem.select("a").first().ownText();
                         viewPageUrl = elem.select("a").attr("abs:href");
+
                         dataTime = elem.select("td.bbs_date").first().text();
                         dataView = elem.select("td.bbs_hit").first().ownText();
                         String ss = dataTime.replaceAll("[^\\d]", "");

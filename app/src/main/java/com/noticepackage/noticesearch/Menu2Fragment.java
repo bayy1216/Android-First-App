@@ -9,6 +9,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -81,6 +82,16 @@ public class Menu2Fragment extends Fragment {
 
 
 
+
+
+
+
+
+
+
+
+
+
         adapeter.setOnItemClickListener(new DataAdapeter.OnItemClickListener() {
             @Override
             public void onItemClick(DataAdapeter.ViewHolder holder, View view, int position) {
@@ -90,7 +101,6 @@ public class Menu2Fragment extends Fragment {
 
             }
         });
-
 
 
 
@@ -124,6 +134,7 @@ public class Menu2Fragment extends Fragment {
         }
 
     }
+
 
 
 

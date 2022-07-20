@@ -7,7 +7,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -44,7 +43,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.security.Key;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -52,11 +50,8 @@ import java.util.Date;
 public class Menu1Fragment extends Fragment {
 
     private AdView mAdView;
-
     EditText textAlarm;
     Button btnAlarm;
-    TextView text1;
-    MainActivity mainActivity;
 
 
     RecyclerView recyclerView;
@@ -68,11 +63,6 @@ public class Menu1Fragment extends Fragment {
     SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
     String today=sdf.format(nowDate);
 
-    @Override
-    public void onAttach(@NonNull Context context) {
-        mainActivity = (MainActivity) getActivity();
-        super.onAttach(context);
-    }
 
     @Nullable
     @Override
@@ -81,7 +71,7 @@ public class Menu1Fragment extends Fragment {
 
         btnAlarm = (Button) rootview.findViewById(R.id.btn_alarm_start);
         textAlarm = (EditText) rootview.findViewById(R.id.alarm_keyword);
-        text1 = (TextView) rootview.findViewById(R.id.textView1);
+
 
 
         recyclerView = (RecyclerView) rootview.findViewById(R.id.recyclerView_menu1);
@@ -90,6 +80,20 @@ public class Menu1Fragment extends Fragment {
 
         keylist = new ArrayList<>();
         keyWordAdapter = new KeyWordAdapter(keylist,getContext().getApplicationContext());
+
+        try {
+            FileInputStream fis = getContext().openFileInput("keyWord_List.tmp");
+            ObjectInputStream ois = new ObjectInputStream(fis);
+            keylist = (ArrayList<KeyWord>) ois.readObject();
+            keyWordAdapter.setList(keylist);
+
+
+            ois.close();
+        }catch(Exception e){
+            Log.d("test", "keyList 열기 실패");
+        }
+
+
         recyclerView.setAdapter(keyWordAdapter);
 
 
@@ -99,10 +103,9 @@ public class Menu1Fragment extends Fragment {
             public void onInitializationComplete(InitializationStatus initializationStatus) {
             }
         });
-        mAdView = (AdView) rootview.findViewById(R.id.adVieww);
+        mAdView = (AdView) rootview.findViewById(R.id.adView_frag1);
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
-
         mAdView.setAdListener(new AdListener() {
             @Override
             public void onAdLoaded() {
@@ -113,6 +116,7 @@ public class Menu1Fragment extends Fragment {
             @Override
             public void onAdFailedToLoad(LoadAdError adError) {
                 Log.d("test","광고실패");
+                Toast.makeText(getContext(),"광고로드중에 실패",Toast.LENGTH_LONG).show();
                 // Code to be executed when an ad request fails.
             }
 
@@ -136,17 +140,7 @@ public class Menu1Fragment extends Fragment {
 
 
 
-        try {
-            FileInputStream fis = getContext().openFileInput("keyWord_List.tmp");
-            ObjectInputStream ois = new ObjectInputStream(fis);
-            keylist = (ArrayList<KeyWord>) ois.readObject();
-            keyWordAdapter.setList(keylist);
 
-
-            ois.close();
-        }catch(Exception e){
-            Log.d("test", "keyList 열기 실패");
-        }
 
 
 
@@ -157,10 +151,10 @@ public class Menu1Fragment extends Fragment {
 
 
         Intent xx= new Intent(getActivity(), MyReceiver.class);
-
         AlarmManager alarmManager = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(getContext(), 0, xx, 0);
-        //PendingIntent pendingIntent = PendingIntent.getBroadcast(getContext(), 0, xx, PendingIntent.FLAG_NO_CREATE);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getContext(), 0, xx, PendingIntent.FLAG_MUTABLE);
+
+
         if (pendingIntent != null && alarmManager != null) {
             alarmManager.cancel(pendingIntent);
         }
@@ -183,12 +177,6 @@ public class Menu1Fragment extends Fragment {
                     Log.d("test", "keyword실패");
                 }
 
-                if (mainActivity.mBundle != null)
-                {
-                    Bundle bundle = mainActivity.mBundle;
-                    String name = bundle.getString("name"); // 프래그먼트1에서 받아온 값 넣기
-                    text1.setText(name);
-                }
 
                 if(alarmManager!=null) {
                     alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP,
@@ -202,8 +190,7 @@ public class Menu1Fragment extends Fragment {
                 }
 
 
-                //NetworkThread th = new NetworkThread();
-                //th.start();
+
             }
         });
 
@@ -225,7 +212,7 @@ public class Menu1Fragment extends Fragment {
 
 
 
-    class NetworkThread extends Thread{
+    /*class NetworkThread extends Thread{
         @Override
         public void run() {
             try{
@@ -254,9 +241,9 @@ public class Menu1Fragment extends Fragment {
                 e.printStackTrace();
             }
         }
-    }
+    }*/
 
-    private static String CHANNEL_ID = "channel1";
+    /*private static String CHANNEL_ID = "channel1";
     private static String CHANNEL_NAME = "Channel1";
     public void showNoti1(String input){
         NotificationManager manger = (NotificationManager) getActivity().getSystemService(Context.NOTIFICATION_SERVICE);
@@ -277,6 +264,6 @@ public class Menu1Fragment extends Fragment {
 
         Notification noti = builder.build();
         manger.notify(1,noti);
-    }
+    }*/
 
 }

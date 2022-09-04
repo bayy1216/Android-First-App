@@ -1,10 +1,13 @@
 package com.noticepackage.noticesearch;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -16,7 +19,7 @@ import java.util.ArrayList;
 public class DataAdapeter extends RecyclerView.Adapter<DataAdapeter.ViewHolder> {
     Context context;
     ArrayList<SearchData> datas= new ArrayList<SearchData>();
-    OnItemClickListener listener;
+    OnDataClickListener listener;
 
 
     public boolean isExist(String strName){//중복되는 공지사항 이름때문에 내가 구글링해서 넣은거
@@ -41,12 +44,7 @@ public class DataAdapeter extends RecyclerView.Adapter<DataAdapeter.ViewHolder> 
         }
     }
 
-    public void removeSite(int code){
-        for(int i=datas.size()-1;i>-1;i--){
-            if(datas.get(i).siteCode==code)
-                datas.remove(i);
-        }
-    }
+
     public void removeAll(String input){
         for(int i=datas.size()-1;i>-1;i--){
             if(datas.get(i).title.equals(input))
@@ -58,8 +56,10 @@ public class DataAdapeter extends RecyclerView.Adapter<DataAdapeter.ViewHolder> 
 
 
 
-    public static interface OnItemClickListener{
+    public static interface OnDataClickListener{
         public void onItemClick(ViewHolder holder, View view,int position);
+
+        public void onStarClick(ViewHolder holder, View view,int position);
     }
 
 
@@ -81,15 +81,21 @@ public class DataAdapeter extends RecyclerView.Adapter<DataAdapeter.ViewHolder> 
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View dataView = inflater.inflate(R.layout.search_data, parent, false);
 
+
+
         return new ViewHolder(dataView);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         SearchData data = datas.get(position);
-        holder.setData(data);
+        holder.onBindData(data);
 
-        holder.setOnItemClickListner(listener);
+        holder.setOnDataClickListner(listener);
+
+
+
+
     }
 
     public void addData(SearchData data){
@@ -103,7 +109,7 @@ public class DataAdapeter extends RecyclerView.Adapter<DataAdapeter.ViewHolder> 
         return datas.get(position);
     }
 
-    public void setOnItemClickListener(OnItemClickListener listener){
+    public void setOnDataClickListener(OnDataClickListener listener){
         this.listener = listener;
     }
 
@@ -118,37 +124,48 @@ public class DataAdapeter extends RecyclerView.Adapter<DataAdapeter.ViewHolder> 
         TextView time;
         TextView site;
         TextView views;
+        ImageView farovites;
 
-        OnItemClickListener listener;
+        OnDataClickListener listener;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
             title = (TextView) itemView.findViewById(R.id.key_word);
             time = (TextView) itemView.findViewById(R.id.search_time);
             site = (TextView) itemView.findViewById(R.id.search_site);
             views = (TextView) itemView.findViewById(R.id.search_views);
+            farovites = (ImageView) itemView.findViewById(R.id.imageViewFarovites);
 
             itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     int position = getAdapterPosition();
-
                     if(listener!=null){
                         listener.onItemClick(ViewHolder.this, v, position);
                     }
                 }
             });
+            farovites.setOnClickListener(new View.OnClickListener() {//삭제
+                @Override
+                public void onClick(View v) {
+                    int position = getAdapterPosition();
+                    if(listener!=null){
+                        listener.onStarClick(ViewHolder.this, v, position);
+                    }
+                }
+            });
+
 
         }
 
-        public void setData(SearchData data){
+        public void onBindData(SearchData data){
             title.setText(data.getTitle());
             time.setText(data.getTime());
             site.setText(data.getSite());
             views.setText(data.getViews());
-
+            farovites.setImageResource(R.drawable.star);
         }
 
-        public void setOnItemClickListner(OnItemClickListener listener){
+        public void setOnDataClickListner(OnDataClickListener listener){
             this.listener = listener;
         }
 

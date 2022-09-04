@@ -7,8 +7,8 @@
 
     <item
         android:id="@+id/navigation_menu2"
-        android:icon="@android:drawable/ic_search_category_default"
-        android:title="검색" />
+        android:icon="@android:drawable/btn_star"
+        android:title="즐겨찾기" />
 
     <item
         android:id="@+id/navigation_menu3"

@@ -60,36 +60,7 @@ public class Menu4Fragment extends Fragment {
         mAdView = (AdView) rootview.findViewById(R.id.adView_frag4);
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
-        mAdView.setAdListener(new AdListener() {
-            @Override
-            public void onAdLoaded() {
-                // Code to be executed when an ad finishes loading.
-            }
 
-            @Override
-            public void onAdFailedToLoad(LoadAdError adError) {
-
-                Toast.makeText(getContext(),"광고로드중에 실패",Toast.LENGTH_LONG).show();
-                // Code to be executed when an ad request fails.
-            }
-
-            @Override
-            public void onAdOpened() {
-                // Code to be executed when an ad opens an overlay that
-                // covers the screen.
-            }
-
-            @Override
-            public void onAdClicked() {
-                // Code to be executed when the user clicks on an ad.
-            }
-
-            @Override
-            public void onAdClosed() {
-                // Code to be executed when the user is about to return
-                // to the app after tapping on an ad.
-            }
-        });
 
         btnSetting.setOnClickListener(new View.OnClickListener() {
             @Override

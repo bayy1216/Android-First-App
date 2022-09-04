@@ -106,37 +106,7 @@ public class Menu1Fragment extends Fragment {
         mAdView = (AdView) rootview.findViewById(R.id.adView_frag1);
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
-        mAdView.setAdListener(new AdListener() {
-            @Override
-            public void onAdLoaded() {
-                Log.d("test","광고성공");
-                // Code to be executed when an ad finishes loading.
-            }
 
-            @Override
-            public void onAdFailedToLoad(LoadAdError adError) {
-                Log.d("test","광고실패");
-                Toast.makeText(getContext(),"광고로드중에 실패",Toast.LENGTH_LONG).show();
-                // Code to be executed when an ad request fails.
-            }
-
-            @Override
-            public void onAdOpened() {
-                // Code to be executed when an ad opens an overlay that
-                // covers the screen.
-            }
-
-            @Override
-            public void onAdClicked() {
-                // Code to be executed when the user clicks on an ad.
-            }
-
-            @Override
-            public void onAdClosed() {
-                // Code to be executed when the user is about to return
-                // to the app after tapping on an ad.
-            }
-        });
 
 
 
@@ -182,8 +152,8 @@ public class Menu1Fragment extends Fragment {
                     alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP,
                             System.currentTimeMillis(),
                             AlarmManager.INTERVAL_DAY, pendingIntent);
-                    Log.d("test","일단시작해보자"+System.currentTimeMillis());
-                    Toast.makeText(getContext(), "일단시작해보자", Toast.LENGTH_SHORT).show();
+                    Log.d("test","일단시작"+System.currentTimeMillis());
+                    Toast.makeText(getContext(), "start", Toast.LENGTH_SHORT).show();
                 }
                 else{
                     Log.d("test","null이라는데요");

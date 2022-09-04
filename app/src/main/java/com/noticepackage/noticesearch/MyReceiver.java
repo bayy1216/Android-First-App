@@ -108,7 +108,7 @@ public class MyReceiver extends BroadcastReceiver {
                         if (Integer.parseInt(ss) < Integer.parseInt(dateControl)) {
                             continue;
                         }
-                        SearchData newAddData= new SearchData(dataTitle, dataTime, SWname[x], "조회수:" + dataView, viewPageUrl,0);
+                        SearchData newAddData= new SearchData(dataTitle, dataTime, SWname[x], "조회수:" + dataView, viewPageUrl);
                         serachdatalist.add(newAddData);
                         try {
                             Thread.sleep(1);
@@ -131,7 +131,7 @@ public class MyReceiver extends BroadcastReceiver {
                         if (Integer.parseInt(ss) < Integer.parseInt(dateControl)) {
                             continue;
                         }
-                        SearchData newAddData= new SearchData(dataTitle, dataTime, CSEname[x], "조회수:" + dataView, viewPageUrl,1);
+                        SearchData newAddData= new SearchData(dataTitle, dataTime, CSEname[x], "조회수:" + dataView, viewPageUrl);
                         serachdatalist.add(newAddData);
                         try {
                             Thread.sleep(1);
@@ -157,7 +157,7 @@ public class MyReceiver extends BroadcastReceiver {
                         if (Integer.parseInt(ss) < Integer.parseInt(dateControl)){
                             continue;
                         }
-                        SearchData newAddData= new SearchData(dataTitle, dataTime, KNUname[x], "조회수:" + dataView, viewPageUrl,2);
+                        SearchData newAddData= new SearchData(dataTitle, dataTime, KNUname[x], "조회수:" + dataView, viewPageUrl);
                         serachdatalist.add(newAddData);
                         try {
                             Thread.sleep(1);

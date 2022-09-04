@@ -27,6 +27,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 
 import com.example.noticesearch.R;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
+import com.google.android.gms.ads.initialization.InitializationStatus;
+import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -35,8 +40,10 @@ import org.jsoup.select.Elements;
 
 
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Timer;
@@ -44,12 +51,20 @@ import java.util.TimerTask;
 
 public class Menu2Fragment extends Fragment {
     RecyclerView recyclerView;
-    DataAdapeter adapeter, filteredList;
+    DataAdapeter adapter;
 
 
-    ArrayList<SearchData> savelist;
+    ArrayList<SearchData> starlist;
+    public String starfile ="list_star.tmp";
+    private AdView mAdViewFrag2;
 
 
+    MainActivity mainActivity;
+    @Override
+    public void onAttach(@NonNull Context context) {
+        mainActivity = (MainActivity) getActivity();
+        super.onAttach(context);
+    }
 
 
     @Nullable
@@ -58,47 +73,78 @@ public class Menu2Fragment extends Fragment {
         ViewGroup rootview = (ViewGroup) inflater.inflate(R.layout.fragment_menu2, container,false);
 
 
-
         recyclerView = (RecyclerView) rootview.findViewById(R.id.recyclerViewFrag2);
         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext().getApplicationContext(), LinearLayoutManager.VERTICAL,false);
         recyclerView.setLayoutManager(layoutManager);
 
-        savelist= new ArrayList<>();
-        adapeter = new DataAdapeter(savelist,getContext().getApplicationContext());
+        starlist= new ArrayList<>();
+        adapter = new DataAdapeter(starlist,getContext().getApplicationContext());
+
+
 
         try {
-            FileInputStream fis = getContext().openFileInput("keysave_List.tmp");
+            FileInputStream fis = getContext().openFileInput(starfile);
             ObjectInputStream ois = new ObjectInputStream(fis);
-            savelist = (ArrayList<SearchData>) ois.readObject();
+            starlist = (ArrayList<SearchData>) ois.readObject();
             ois.close();
+            Log.d("test","star리스트 불러옴");
+            adapter.addDatas(starlist);
         }catch(Exception e){
             Log.d("test", "프래그2에서 저장 파일 열기 실패");
         }
 
-        Collections.sort(savelist,SearchData.mydata);
-
-        recyclerView.setAdapter(adapeter);
+        recyclerView.setAdapter(adapter);
 
 
-
-
-
-
-
-
-
-
+        MobileAds.initialize(getContext(), new OnInitializationCompleteListener() {
+            @Override
+            public void onInitializationComplete(InitializationStatus initializationStatus) {
+            }
+        });
+        mAdViewFrag2 = (AdView) rootview.findViewById(R.id.adView_frag2);
+        AdRequest adRequest = new AdRequest.Builder().build();
+        mAdViewFrag2.loadAd(adRequest);
 
 
 
 
-        adapeter.setOnItemClickListener(new DataAdapeter.OnItemClickListener() {
+
+
+
+
+
+
+
+
+        adapter.setOnDataClickListener(new DataAdapeter.OnDataClickListener() {
             @Override
             public void onItemClick(DataAdapeter.ViewHolder holder, View view, int position) {
-                SearchData data = adapeter.getData(position);
+                SearchData data = adapter.getData(position);
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(data.siteaddress));
                 startActivity(intent);
+            }
+            @Override
+            public void onStarClick(DataAdapeter.ViewHolder holder, View view, int position) {
+                SearchData newstardata = adapter.getData(position);
 
+                Log.d("test",newstardata.getTitle());
+
+                starlist.remove(position);
+                try {
+                    Log.d("test", "저장 시도");
+                    FileOutputStream fos = getContext().openFileOutput(starfile, Context.MODE_PRIVATE);
+                    ObjectOutputStream oos = new ObjectOutputStream(fos);
+
+                    oos.writeObject(starlist);
+                    Log.d("test", "저장완료");
+
+                    oos.close();
+                }
+                catch (Exception e) {
+                    Log.d("test","저장 실패");
+                    e.printStackTrace();
+                }
+                recyclerView.setAdapter(adapter);
             }
         });
 
@@ -110,12 +156,9 @@ public class Menu2Fragment extends Fragment {
 
 
 
-
-
-
         return rootview;
     }
-
+/*
     public void searchFilter(DataAdapeter targetAdapter, String filterTitle){
         //filteredList = new DataAdapeter(getContext().getApplicationContext());
         for (int i=0; i<targetAdapter.getItemCount();i++){
@@ -124,18 +167,16 @@ public class Menu2Fragment extends Fragment {
                         targetAdapter.getData(i).getTime(),
                         targetAdapter.getData(i).getSite(),
                         targetAdapter.getData(i).getViews(),
-                        targetAdapter.getData(i).getSiteaddress(),9));
+                        targetAdapter.getData(i).getSiteaddress()));
 
                 recyclerView.setAdapter(filteredList);
 
                 System.out.println(i);
             }
-
         }
-
     }
 
-
+*/
 
 
 }

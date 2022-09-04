@@ -51,7 +51,7 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
 
     AddDataHandler addDataHandler;
     SearchSiteTherad searchSiteTherad;
-
+    SearchSiteImproved searchSiteImproved;
 
     String dataTitle; String dataTime; String dataView; String viewPageUrl;
 
@@ -75,16 +75,20 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
 
     private int tempvalue;
     private int tempaAdder = 100/(12);
+
     public String dateControl="20220301";
 
-    private boolean[] siteControl= {false, false, false};
-
+    private double tempvalueD;
+    private double tempAdderD=100.0/288;
 
 
     ProgressBar tempProgress;
 
 
     public String savelist ="list_save.tmp";
+
+    ArrayList<SearchData> starlist;
+    public String starfile ="list_star.tmp";
 
     SwipeRefreshLayout swipeRefreshLayout;
 
@@ -112,45 +116,19 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
 
         tempProgress = (ProgressBar) rootview.findViewById(R.id.progressBar3);
         addDataHandler = new AddDataHandler();
-        searchSiteTherad = new SearchSiteTherad();
 
+
+        searchSiteTherad = new SearchSiteTherad();
+        searchSiteImproved=new SearchSiteImproved();
 
         swipeRefreshLayout = rootview.findViewById(R.id.swipeLayout);
         swipeRefreshLayout.setOnRefreshListener(this);
 
 
-        try {
-            SearchSiteImproved s=new SearchSiteImproved();
-            s.start();
-        }catch(Exception e){
-            Log.d("tt","html에서 실패");
-            loadCurrentGame();
-        }
-
-        try {
-            FileInputStream fis1 = getContext().openFileInput("permission_save.tmp");
-            DataInputStream dis1 = new DataInputStream(fis1);
-            siteCode=dis1.readInt();
-            Log.d("test","code"+siteCode);
-            dis1.close();
-
-            if(siteCode%2==1) siteControl[0]=true;
-            if((siteCode/2)%2==1) siteControl[1]=true;
-            if((siteCode/4)%2==1) siteControl[2]=true;
-
-            for(int x=0;x<siteControl.length;x++){
-                if(siteControl[x]){
-                    adapter.removeSite(x);
-                    Log.d("test",x+"를 삭제해야함");
-                    recyclerView.setAdapter(adapter);
-                }
-            }
 
 
 
-        } catch (Exception e) {
-            Log.d("test","사이트code에서 오픈 실패");
-        }
+        loadCurrentGame();
 
 
 
@@ -158,13 +136,48 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
 
 
 
-        adapter.setOnItemClickListener(new DataAdapeter.OnItemClickListener() {
+        adapter.setOnDataClickListener(new DataAdapeter.OnDataClickListener() {
             @Override
             public void onItemClick(DataAdapeter.ViewHolder holder, View view, int position) {
-
                 SearchData data = adapter.getData(position);
                 Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(data.siteaddress));
                 startActivity(intent);
+            }
+            @Override
+            public void onStarClick(DataAdapeter.ViewHolder holder, View view, int position) {
+                SearchData newstardata = adapter.getData(position);
+
+                Log.d("test",newstardata.getTitle());
+                try {
+                    FileInputStream fis = getContext().openFileInput(starfile);
+                    Log.d("test","이미 있어서 불러오기 시작");
+                    ObjectInputStream ois = new ObjectInputStream(fis);
+                    starlist = (ArrayList<SearchData>) ois.readObject();
+                    if(starlist==null){
+                        starlist=new ArrayList<>();
+                    }
+
+                    Log.d("test","starlist 불러오기 성공");
+                    ois.close();
+                } catch (Exception e) {
+                    Log.d("test", "오픈(로드) 실패");
+                }
+                starlist.add(newstardata);
+                try {
+                    Log.d("test", "저장 시도");
+                    FileOutputStream fos = getContext().openFileOutput(starfile, Context.MODE_PRIVATE);
+                    ObjectOutputStream oos = new ObjectOutputStream(fos);
+
+                    oos.writeObject(starlist);
+                    Log.d("test", "저장완료");
+
+                    oos.close();
+                }
+                catch (Exception e) {
+                    Log.d("test","저장 실패");
+                    e.printStackTrace();
+                }
+
             }
         });
 
@@ -178,8 +191,11 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
             try {
                 doc = Jsoup.connect("http://13.209.154.237:58740/").get();
                 Elements elements = doc.select("tbody tr");
-
+                tempvalueD = 0;
                 for (Element elem : elements) {
+                    tempvalueD += tempAdderD;
+                    addDataHandler.sendEmptyMessage(3);
+
                     dataTitle = elem.select("td.title").text();
                     viewPageUrl = elem.select("td.href").text();
                     dataTime = elem.select("td.date").text();
@@ -187,7 +203,7 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                     String site=elem.select("td.name").text();
 
 
-                    SearchData newAddData = new SearchData(dataTitle, dataTime, site, "조회수:" + dataView, viewPageUrl, 0);
+                    SearchData newAddData = new SearchData(dataTitle, dataTime, site, "조회수:" + dataView, viewPageUrl);
                     Message msg = new Message();
                     msg.what=1;
                     msg.obj=newAddData;
@@ -222,7 +238,6 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                     tempvalue += tempaAdder;
                     addDataHandler.sendEmptyMessage(0);
 
-                    if(siteControl[0]) continue;//설정에서 체크되있으면 사이트안받기
 
                     doc = Jsoup.connect(SWURL[x]).get();
                     Elements elements = doc.select("tbody tr");
@@ -237,7 +252,7 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                             continue;
                         }
 
-                        SearchData newAddData= new SearchData(dataTitle, dataTime, SWname[x], "조회수:" + dataView, viewPageUrl,0);
+                        SearchData newAddData= new SearchData(dataTitle, dataTime, SWname[x], "조회수:" + dataView, viewPageUrl);
                         Message msg = new Message();
                         msg.what=1;
                         msg.obj=newAddData;
@@ -255,7 +270,6 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                     tempvalue += tempaAdder;
                     addDataHandler.sendEmptyMessage(0);
 
-                    if(siteControl[1]) continue;//설정에서 체크되있으면 사이트안받기
                     doc = Jsoup.connect(CSEURL[x]).get();
                     Elements cseElements = doc.select("tbody tr");
 
@@ -271,7 +285,7 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                             continue;
                         }
 
-                        SearchData newAddData= new SearchData(dataTitle, dataTime, CSEname[x], "조회수:" + dataView, viewPageUrl,1);
+                        SearchData newAddData= new SearchData(dataTitle, dataTime, CSEname[x], "조회수:" + dataView, viewPageUrl);
                         Message msg = new Message();
                         msg.what=1;
                         msg.obj=newAddData;
@@ -289,7 +303,6 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                     tempvalue += tempaAdder;
                     addDataHandler.sendEmptyMessage(0);
 
-                    if(siteControl[2]) continue;//설정에서 체크되있으면 사이트안받기
 
                     doc = Jsoup.connect(KNUURL[x]).get();
                     Elements knuElements = doc.select("tbody tr");
@@ -308,7 +321,7 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                             continue;
                         }
 
-                        SearchData newAddData= new SearchData(dataTitle, dataTime, KNUname[x], "조회수:" + dataView, viewPageUrl,2);
+                        SearchData newAddData= new SearchData(dataTitle, dataTime, KNUname[x], "조회수:" + dataView, viewPageUrl);
                         Message msg = new Message();
                         msg.what=1;
                         msg.obj=newAddData;
@@ -359,6 +372,9 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                     //adapter.Deduplication();
                     recyclerView.setAdapter(adapter);
                     break;
+                case 3:
+                    tempProgress.setProgress((int)tempvalueD);
+                    break;
             }
 
 
@@ -374,8 +390,6 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
 
             Log.d("test", "저장 시도");
             FileOutputStream fos = getContext().openFileOutput(savelist, Context.MODE_PRIVATE);
-
-            // FileOutputStream fos = new FileOutputStream("myfile1.dat");
             ObjectOutputStream oos = new ObjectOutputStream(fos);
 
             oos.writeObject(mlist);
@@ -395,9 +409,7 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
 
     public void loadCurrentGame() {
         try {
-
             FileInputStream fis = getContext().openFileInput(savelist);
-            //FileInputStream fis = new FileInputStream("t.tmp");
             Log.d("test","이미 있어서 불러오기 시작");
             ObjectInputStream ois = new ObjectInputStream(fis);
 
@@ -416,13 +428,20 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                 Log.d("test",today+"!="+savedDay);
                 tempProgress.setVisibility(View.VISIBLE);
                 searchSiteTherad.start();
+
             }
             ois.close();
             dis.close();
 
         } catch (Exception e) {
             Log.d("test","오픈(로드) 실패");
-            searchSiteTherad.start();//사이트 가져오기 (업데이트)
+            searchSiteTherad.start();
+            /*
+            try {
+                searchSiteImproved.start();//사이트 가져오기 (업데이트)
+            } catch(Exception ee){
+                searchSiteTherad.start();
+            }*/
         }
     }
 
@@ -430,22 +449,46 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
     public void onRefresh() {
         //새로 고침 코드
         updateLayoutView();
-
         //새로 고침 완
         swipeRefreshLayout.setRefreshing(false);
     }
 
     // 당겨서 새로고침 했을 때 뷰 변경 메서드
     public void updateLayoutView(){
-        if(searchSiteTherad.isAlive()){
-            searchSiteTherad.interrupt();
-        }
-        searchSiteTherad = new SearchSiteTherad();
-        Log.d("test","swap->update");
-        tempProgress.setVisibility(View.VISIBLE);
-        searchSiteTherad.start();
+        try{
+            if(searchSiteTherad.isAlive()){
+                searchSiteTherad.interrupt();
+            }
+            searchSiteTherad = new SearchSiteTherad();
+            Log.d("test","swap->update");
+            tempProgress.setVisibility(View.VISIBLE);
+            searchSiteTherad.start();
+        } catch(Exception e){
 
+        }
     }
+    public void updateLayoutViewImproved(){
+        try{
+            if(searchSiteImproved.isAlive()){
+                searchSiteImproved.interrupt();
+            }
+            searchSiteImproved = new SearchSiteImproved();
+            Log.d("test","swap->update");
+            tempProgress.setVisibility(View.VISIBLE);
+
+            searchSiteImproved.start();
+        } catch(Exception e){
+            if(searchSiteTherad.isAlive()){
+                searchSiteTherad.interrupt();
+            }
+            searchSiteTherad = new SearchSiteTherad();
+            Log.d("test","swap->update");
+            tempProgress.setVisibility(View.VISIBLE);
+            searchSiteTherad.start();
+        }
+    }
+
+
 
 
 

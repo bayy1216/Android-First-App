@@ -9,15 +9,24 @@ public class SearchData implements Serializable {
     String site;
     String views;
     String siteaddress;
-    int siteCode;
 
-    public SearchData(String title, String time, String site, String views, String siteaddress,int siteCode) {
+    int imageResid;
+
+    public int getImageResid() {
+        return imageResid;
+    }
+
+    public void setImageResid(int imageResid) {
+        this.imageResid = imageResid;
+    }
+
+    public SearchData(String title, String time, String site, String views, String siteaddress) {
         this.title = title;
         this.time = time;
         this.site = site;
         this.views = views;
         this.siteaddress = siteaddress;
-        this.siteCode=siteCode;
+
     }
 
     public String getTitle() {
@@ -60,13 +69,7 @@ public class SearchData implements Serializable {
         this.siteaddress = siteaddress;
     }
 
-    public int getSiteCode() {
-        return siteCode;
-    }
 
-    public void setSiteCode(int siteCode) {
-        this.siteCode = siteCode;
-    }
 
     public int compareTo(SearchData o){
        return Integer.parseInt(this.time)-Integer.parseInt(o.getTime());

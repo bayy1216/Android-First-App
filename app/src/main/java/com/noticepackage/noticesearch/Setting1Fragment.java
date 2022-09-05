@@ -52,6 +52,7 @@ public class Setting1Fragment extends Fragment{
             @Override
             public void onClick(View v) {
                 mainActivity.changeFrag(4);
+                mainActivity.delFrag(3);
             }
         });
 
@@ -99,6 +100,8 @@ public class Setting1Fragment extends Fragment{
                 Log.d("test","저장 실패");
                 e.printStackTrace(); }
             }
+
+
     }
 
 

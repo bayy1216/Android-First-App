@@ -2,6 +2,7 @@ package com.noticepackage.noticesearch;
 
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 
 
@@ -35,9 +36,6 @@ public class MainActivity extends AppCompatActivity {
         BottomNavigationView bottomNavigationView = (BottomNavigationView) findViewById(R.id.nav_view);
 
 
-
-
-        //initFrag();
         changeFrag(3);
 
         bottomNavigationView.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener(){
@@ -64,16 +62,36 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-
-    private void initFrag(){
-
-        setting1Fragment=new Setting1Fragment();
-
-        //fragmentTransaction.add(R.id.container,menu2Fragment);
-
-        fragmentTransaction.add(R.id.container,setting1Fragment);
-        fragmentTransaction.commit();
+    public void delFrag(int index) {
+        switch (index) {
+            case 1:
+                if (menu1Fragment != null) {
+                    menu1Fragment = null;
+                }
+                break;
+            case 2://2번은 항상 초기화시켜주기 위해 add함
+                if (menu2Fragment != null) {
+                    menu2Fragment = null;
+                }
+                break;
+            case 3:
+                if (menu3Fragment != null) {
+                    menu3Fragment = null;
+                }
+                break;
+            case 4:
+                if (menu4Fragment != null) {
+                    menu4Fragment = null;
+                }
+                break;
+            case 5:
+                if (setting1Fragment != null) {
+                    setting1Fragment = null;
+                }
+                break;
+        }
     }
+
 
     public void changeFrag(int index){
         Fragment selected = null;
@@ -86,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 selected=menu1Fragment;
                 break;
-            case 2:
+            case 2://2번은 항상 초기화시켜주기 위해 add함
                 if(menu2Fragment==null){
                     menu2Fragment = new Menu2Fragment();
                     fragmentTransaction.add(R.id.container,menu2Fragment);
@@ -116,7 +134,6 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
 
-
         if(menu1Fragment!=null) fragmentTransaction.hide(menu1Fragment);
         if(menu2Fragment!=null) fragmentTransaction.hide(menu2Fragment);
         if(menu3Fragment!=null) fragmentTransaction.hide(menu3Fragment);
@@ -125,6 +142,8 @@ public class MainActivity extends AppCompatActivity {
 
         fragmentTransaction.show(selected);
         fragmentTransaction.commit();
+
+
     }
     public void fragBtnClick(Bundle bundle) {
         this.mBundle = bundle;

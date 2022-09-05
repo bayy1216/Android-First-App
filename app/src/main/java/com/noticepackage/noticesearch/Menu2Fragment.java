@@ -158,6 +158,11 @@ public class Menu2Fragment extends Fragment {
 
         return rootview;
     }
+
+
+
+
+
 /*
     public void searchFilter(DataAdapeter targetAdapter, String filterTitle){
         //filteredList = new DataAdapeter(getContext().getApplicationContext());

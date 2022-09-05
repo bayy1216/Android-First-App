@@ -2,6 +2,8 @@ package com.noticepackage.noticesearch;
 
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -42,6 +44,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Locale;
 
 public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
 
@@ -99,6 +102,14 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
 
     int siteCode=0;
 
+
+    MainActivity mainActivity;
+    @Override
+    public void onAttach(@NonNull Context context) {
+        mainActivity = (MainActivity) getActivity();
+        super.onAttach(context);
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -145,6 +156,8 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
             }
             @Override
             public void onStarClick(DataAdapeter.ViewHolder holder, View view, int position) {
+                mainActivity.delFrag(2);
+
                 SearchData newstardata = adapter.getData(position);
 
                 Log.d("test",newstardata.getTitle());
@@ -447,14 +460,11 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
 
     @Override
     public void onRefresh() {
-        //새로 고침 코드
-        updateLayoutView();
-        //새로 고침 완
-        swipeRefreshLayout.setRefreshing(false);
+        updateLayoutView();//새로 고침 코드
+        swipeRefreshLayout.setRefreshing(false);//새로 고침 완
     }
 
-    // 당겨서 새로고침 했을 때 뷰 변경 메서드
-    public void updateLayoutView(){
+    public void updateLayoutView(){// 당겨서 새로고침 했을 때 뷰 변경 메서드
         try{
             if(searchSiteTherad.isAlive()){
                 searchSiteTherad.interrupt();
@@ -490,6 +500,77 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
 
 
 
+    public void insertDB(View view){
+        DBHelper helper = new DBHelper(mainActivity);
+        SQLiteDatabase db= helper.getWritableDatabase();
+        String sql = "insert into SearchDataTable (title, time, site, views, siteaddress) values (?, ?, ?, ?, ?)";
+
+        //데이터준비
+        String [] arg1={"문자열1", "100", "11.11", "dasd","adas"};
+        String [] arg2={"문자열2", "200", "22.22", "ad","asd"};
+
+        db.execSQL(sql,arg1);
+        db.execSQL(sql,arg2);
+        db.close();
+    }
+    public void selectDB(View view){
+        DBHelper helper = new DBHelper(mainActivity);
+        SQLiteDatabase db= helper.getWritableDatabase();
+
+        //"select 컬럼명들 from 테이블명 where 조건절 group by 기준컬럼 having 조건절 order by 컬럼명"
+        String sql="select * from SearchDataTable";
+
+        //쿼리실행
+        Cursor c =db.rawQuery(sql,null);
+
+        //선택된 로우 끝까지 반복하며 데이터
+        while(c.moveToNext()){
+            //가져올 컬럼의 인덱스 번호를 가져옴
+            //int idx_pos=c.getColumnIndex("idx");
+            int title_pos=c.getColumnIndex("title");
+            int time_pos=c.getColumnIndex("time");
+            int site_pos=c.getColumnIndex("site");
+            int viewsa_pos=c.getColumnIndex("views");
+            int siteaddress_pos=c.getColumnIndex("siteaddress");
+
+            //컬럼 인덱스번호를 통해데이터를 가져옴
+            //int idx=c.getInt(idx_pos);
+            String title=c.getString(title_pos);
+            String time=c.getString(time_pos);
+            String site=c.getString(site_pos);
+            String views=c.getString(viewsa_pos);
+            String siteaddress=c.getString(siteaddress_pos);
+
+            SearchData newData= new SearchData(title,time,site,views,siteaddress);
+
+
+        }
+    }
+
+
+    public void updateDB(View view) {
+        DBHelper helper = new DBHelper(mainActivity);
+        SQLiteDatabase db= helper.getWritableDatabase();
+        String sql="update TestTable set textData = ? where idx = ?";
+        //update 테이블명 set 컬럼=값 where 조건절
+
+
+        String [] args={"문자열3","1"};
+
+        db.execSQL(sql,args);
+        db.close();
+    }
+    public void deleteDB(View view) {
+        DBHelper helper = new DBHelper(mainActivity);
+        SQLiteDatabase db= helper.getWritableDatabase();
+        String sql="delete from TestTable where idx = ?";
+        //delete from 테이블명 where 조건절
+
+        String[] args={"1"};
+
+        db.execSQL(sql,args);
+        db.close();
+    }
 
 
 

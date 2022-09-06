@@ -8,10 +8,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
@@ -22,11 +26,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.noticesearch.R;
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-import com.google.android.gms.ads.MobileAds;
-import com.google.android.gms.ads.initialization.InitializationStatus;
-import com.google.android.gms.ads.initialization.OnInitializationCompleteListener;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -38,13 +37,11 @@ import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Locale;
+
 
 public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
 
@@ -88,10 +85,7 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
     ProgressBar tempProgress;
 
 
-    public String savelist ="list_save.tmp";
 
-    ArrayList<SearchData> starlist;
-    public String starfile ="list_star.tmp";
 
     SwipeRefreshLayout swipeRefreshLayout;
 
@@ -101,6 +95,10 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
     String today=sdf.format(nowDate);
 
     int siteCode=0;
+
+
+    public String recentTimeFile ="recentTime.tmp";
+    public String SearchDataTable="SearchDataTable.db";
 
 
     MainActivity mainActivity;
@@ -139,11 +137,20 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
 
 
 
-        loadCurrentGame();
+        initload();
 
+        EditText edText=(EditText)rootview.findViewById(R.id.searchText);
 
-
-
+        edText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) { }
+            @Override
+            public void afterTextChanged(Editable s) {
+                searchFilter(edText.getText().toString());
+            }
+        });
 
 
 
@@ -157,39 +164,20 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
             @Override
             public void onStarClick(DataAdapeter.ViewHolder holder, View view, int position) {
                 mainActivity.delFrag(2);
+                SearchData newstarData = adapter.getData(position);
+                Log.d("test",newstarData.getTitle());
 
-                SearchData newstardata = adapter.getData(position);
 
-                Log.d("test",newstardata.getTitle());
-                try {
-                    FileInputStream fis = getContext().openFileInput(starfile);
-                    Log.d("test","이미 있어서 불러오기 시작");
-                    ObjectInputStream ois = new ObjectInputStream(fis);
-                    starlist = (ArrayList<SearchData>) ois.readObject();
-                    if(starlist==null){
-                        starlist=new ArrayList<>();
-                    }
+                DBHelper helper = new DBHelper(mainActivity,SearchDataTable);
+                SQLiteDatabase db= helper.getWritableDatabase();
 
-                    Log.d("test","starlist 불러오기 성공");
-                    ois.close();
-                } catch (Exception e) {
-                    Log.d("test", "오픈(로드) 실패");
-                }
-                starlist.add(newstardata);
-                try {
-                    Log.d("test", "저장 시도");
-                    FileOutputStream fos = getContext().openFileOutput(starfile, Context.MODE_PRIVATE);
-                    ObjectOutputStream oos = new ObjectOutputStream(fos);
 
-                    oos.writeObject(starlist);
-                    Log.d("test", "저장완료");
+                String sql = "update SearchDataTable set star = star+1 where title = ?";
+                String[] arg={newstarData.getTitle()};
+                db.execSQL(sql,arg);
 
-                    oos.close();
-                }
-                catch (Exception e) {
-                    Log.d("test","저장 실패");
-                    e.printStackTrace();
-                }
+
+                db.close();
 
             }
         });
@@ -215,13 +203,11 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                     dataView = elem.select("td.hit").text();
                     String site=elem.select("td.name").text();
 
-
                     SearchData newAddData = new SearchData(dataTitle, dataTime, site, "조회수:" + dataView, viewPageUrl);
                     Message msg = new Message();
                     msg.what=1;
                     msg.obj=newAddData;
                     addDataHandler.sendMessage(msg);
-
 
                     try {
                         Thread.sleep(1);
@@ -229,7 +215,6 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                         e.printStackTrace();
                     }
                 }
-                saveCurrentGame();
                 addDataHandler.sendEmptyMessage(2);
                 Log.d("test","html에서 쓰레드 종료!!!");
             }
@@ -243,41 +228,14 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
     class SearchSiteTherad extends Thread{
         @Override
         public void run() {
+            DBHelper helper = new DBHelper(mainActivity,SearchDataTable);
+            SQLiteDatabase db= helper.getWritableDatabase();
+            String sql = "insert into SearchDataTable (title, time, site, siteCode, views, siteaddress) values (?, ?, ?, ?, ?, ?)";
+
             Document doc;
             try {
                 tempvalue = 0;
                 int x;
-                for (x = 0; x < SWURL.length; x++) {
-                    tempvalue += tempaAdder;
-                    addDataHandler.sendEmptyMessage(0);
-
-
-                    doc = Jsoup.connect(SWURL[x]).get();
-                    Elements elements = doc.select("tbody tr");
-
-                    for (Element elem : elements) {
-                        dataTitle = elem.select("td.l").first().text();
-                        viewPageUrl = elem.select("a").attr("abs:href");
-                        dataTime = elem.select("td").get(4).text();
-                        dataView = elem.select("td").get(5).text();
-                        String ss = dataTime.replaceAll("[^\\d]", "");
-                        if (Integer.parseInt(ss) < Integer.parseInt(dateControl)) {
-                            continue;
-                        }
-
-                        SearchData newAddData= new SearchData(dataTitle, dataTime, SWname[x], "조회수:" + dataView, viewPageUrl);
-                        Message msg = new Message();
-                        msg.what=1;
-                        msg.obj=newAddData;
-                        addDataHandler.sendMessage(msg);
-
-                        try {
-                            Thread.sleep(1);
-                        }
-                        catch (Exception e) {e.printStackTrace();
-                        }
-                    }
-                }
 
                 for (x=0;x<CSEURL.length;x++) {
                     tempvalue += tempaAdder;
@@ -286,11 +244,9 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                     doc = Jsoup.connect(CSEURL[x]).get();
                     Elements cseElements = doc.select("tbody tr");
 
-
                     for (Element elem : cseElements) {
                         dataTitle = elem.select("a").first().ownText();
                         viewPageUrl = elem.select("a").attr("abs:href");
-
                         dataTime = elem.select("td.bbs_date").first().text();
                         dataView = elem.select("td.bbs_hit").first().ownText();
                         String ss = dataTime.replaceAll("[^\\d]", "");
@@ -298,11 +254,10 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                             continue;
                         }
 
-                        SearchData newAddData= new SearchData(dataTitle, dataTime, CSEname[x], "조회수:" + dataView, viewPageUrl);
-                        Message msg = new Message();
-                        msg.what=1;
-                        msg.obj=newAddData;
-                        addDataHandler.sendMessage(msg);
+                        String [] arg1={dataTitle, dataTime, CSEname[x], "CSE","조회수:" + dataView, viewPageUrl};
+                        try {
+                            db.execSQL(sql, arg1);
+                        }catch (Exception e){}
 
                         try {
                             Thread.sleep(1);
@@ -316,12 +271,10 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                     tempvalue += tempaAdder;
                     addDataHandler.sendEmptyMessage(0);
 
-
                     doc = Jsoup.connect(KNUURL[x]).get();
                     Elements knuElements = doc.select("tbody tr");
 
                     for (Element elem : knuElements) {
-
                         dataTitle = elem.select("a").first().ownText();
                         if(x==0) viewPageUrl = elem.select("a").attr("abs:href");
                         else{//url이 자바관련 이라서 학사공지탭으로 이동
@@ -334,11 +287,37 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                             continue;
                         }
 
-                        SearchData newAddData= new SearchData(dataTitle, dataTime, KNUname[x], "조회수:" + dataView, viewPageUrl);
-                        Message msg = new Message();
-                        msg.what=1;
-                        msg.obj=newAddData;
-                        addDataHandler.sendMessage(msg);
+                        String [] arg1={dataTitle, dataTime, KNUname[x], "KNU","조회수:" + dataView, viewPageUrl};
+                        try {
+                            db.execSQL(sql, arg1);
+                        }catch (Exception e){}
+                        try {
+                            Thread.sleep(1);
+                        }
+                        catch (Exception e) {e.printStackTrace();
+                        }
+                    }
+                }
+                for (x = 0; x < SWURL.length; x++) {
+                    tempvalue += tempaAdder;
+                    addDataHandler.sendEmptyMessage(0);
+
+                    doc = Jsoup.connect(SWURL[x]).get();
+                    Elements elements = doc.select("tbody tr");
+
+                    for (Element elem : elements) {
+                        dataTitle = elem.select("td.l").first().text();
+                        viewPageUrl = elem.select("a").attr("abs:href");
+                        dataTime = elem.select("td").get(4).text();
+                        dataView = elem.select("td").get(5).text();
+                        String ss = dataTime.replaceAll("[^\\d]", "");
+                        if (Integer.parseInt(ss) < Integer.parseInt(dateControl)) {
+                            continue;
+                        }
+                        String [] arg1={dataTitle, dataTime, SWname[x], "SW","조회수:" + dataView, viewPageUrl};
+                        try {
+                            db.execSQL(sql, arg1);
+                        }catch (Exception e){}
 
                         try {
                             Thread.sleep(1);
@@ -347,14 +326,19 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                         }
                     }
                 }
+                db.close();
 
-
-
-                saveCurrentGame();
-                addDataHandler.sendEmptyMessage(2);
-
+                try{
+                    FileOutputStream fos = getContext().openFileOutput(recentTimeFile, Context.MODE_PRIVATE);
+                    DataOutputStream dos = new DataOutputStream(fos);
+                    dos.writeUTF(today);
+                    Log.d("test","today-save--"+today);
+                    dos.close();
+                }catch(Exception e){
+                    Log.d("test","파일로 날짜 저장중 오류");
+                }
                 Log.d("test","쓰레드 종료!!!");
-
+                addDataHandler.sendEmptyMessage(2);
             }
             catch (IOException e) {
                 e.printStackTrace();
@@ -381,13 +365,12 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                     break;
                 case 2:
                     tempProgress.setVisibility(View.GONE);
-                    //Collections.sort(mlist,SearchData.mydata);
-                    //adapter.Deduplication();
-                    recyclerView.setAdapter(adapter);
+                    loadCurrentGame();
                     break;
                 case 3:
                     tempProgress.setProgress((int)tempvalueD);
                     break;
+
             }
 
 
@@ -395,67 +378,91 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
         }
     }
 
-    public void saveCurrentGame() {
-        try {
-            Collections.sort(mlist, SearchData.mydata);
-            adapter.Deduplication();//저정하는데 sort하고 writeObjcet하고 충돌해서 임시로 일단 이렇게
-            //해봤는데 일단 돌아가긴하는데 왜이런지는 잘 모르겠음(쓰레드에서)화면구성요소 접근한거가 작동이되는거
-
-            Log.d("test", "저장 시도");
-            FileOutputStream fos = getContext().openFileOutput(savelist, Context.MODE_PRIVATE);
-            ObjectOutputStream oos = new ObjectOutputStream(fos);
-
-            oos.writeObject(mlist);
-            Log.d("test", "저장완료");
-
-            DataOutputStream dos = new DataOutputStream(fos);
-            dos.writeUTF(today);
-            Log.d("test","today-save--"+today);
-            oos.close();
-            dos.close();
-        }
-        catch (Exception e) {
-            Log.d("test","저장 실패");
-            e.printStackTrace(); }
-    }
-
-
-    public void loadCurrentGame() {
-        try {
-            FileInputStream fis = getContext().openFileInput(savelist);
-            Log.d("test","이미 있어서 불러오기 시작");
-            ObjectInputStream ois = new ObjectInputStream(fis);
-
-
-            mlist = (ArrayList<SearchData>) ois.readObject();
-            Log.d("test","mlist 불러오기 성공");
-
+    public void initload(){//최근 시간 알아보고 1시간 안지났으면 그대로 오픈하고 아니면 Thread로 검색
+        try{
+            FileInputStream fis = getContext().openFileInput(recentTimeFile);
             DataInputStream dis = new DataInputStream(fis);
             String savedDay = dis.readUTF();
             Log.d("test","마지막 저장된 day : "+savedDay);
-
-            tempProgress.setVisibility(View.GONE);
-            adapter.addDatas(mlist);
-
             if(today.compareTo(savedDay)!=0){//마지막갱신후 1시간 경과시 새로고침
                 Log.d("test",today+"!="+savedDay);
                 tempProgress.setVisibility(View.VISIBLE);
                 searchSiteTherad.start();
-
             }
-            ois.close();
+            else{
+                Log.d("test","1시간 안지나서 불러옴");
+                loadCurrentGame();
+            }
             dis.close();
-
-        } catch (Exception e) {
-            Log.d("test","오픈(로드) 실패");
-            searchSiteTherad.start();
-            /*
-            try {
-                searchSiteImproved.start();//사이트 가져오기 (업데이트)
-            } catch(Exception ee){
+        }catch(Exception e){
+            Log.d("test","파일로 시간확인중 오류발생->파일만든다");
+            try{
+                tempProgress.setVisibility(View.VISIBLE);
+                FileOutputStream fos = getContext().openFileOutput(recentTimeFile, Context.MODE_PRIVATE);
+                DataOutputStream dos = new DataOutputStream(fos);
+                dos.writeUTF(today);
+                Log.d("test","today-save--"+today);
+                dos.close();
                 searchSiteTherad.start();
-            }*/
+            }catch(Exception ee){
+                Log.d("test","파일로 첫설치 날짜 저장중 오류");
+            }
         }
+    }
+
+
+    public void loadCurrentGame() {
+        Log.d("test","loadCurrentGame호출");
+        DBHelper helper = new DBHelper(mainActivity,SearchDataTable);
+        SQLiteDatabase db= helper.getWritableDatabase();
+
+        try {
+            FileInputStream fis = getContext().openFileInput("permission_save.tmp");
+            DataInputStream dis = new DataInputStream(fis);
+            siteCode = dis.readInt();
+            dis.close();
+        }catch(Exception e){
+            Log.d("test", "사이트코드 파일 안열림");
+        }
+
+        String exceptSite_3="";
+        String exceptSite_1="";
+        String exceptSite_2="";
+        if((siteCode/4)%2==1) exceptSite_3+="'KNU',";
+        if((siteCode/2)%2==1) exceptSite_2+="'CSE',";
+        if(siteCode%2==1) exceptSite_1+="'SW',";
+        String exceptSite=exceptSite_3+exceptSite_2+exceptSite_1+"'N'";
+
+        //"select 컬럼명들 from 테이블명 where 조건절 group by 기준컬럼 having 조건절 order by 컬럼명"
+        String sql="select * from SearchDataTable where siteCode NOT IN ("+exceptSite+")order by time DESC";
+        //쿼리실행
+        Cursor c =db.rawQuery(sql,null);
+
+        //선택된 로우 끝까지 반복하며 데이터
+        while(c.moveToNext()){
+            //가져올 컬럼의 인덱스 번호를 가져옴
+            int title_pos=c.getColumnIndex("title");
+            int time_pos=c.getColumnIndex("time");
+            int site_pos=c.getColumnIndex("site");
+            int viewsa_pos=c.getColumnIndex("views");
+            int siteaddress_pos=c.getColumnIndex("siteaddress");
+            int star_pos=c.getColumnIndex("star");
+
+            //컬럼 인덱스번호를 통해데이터를 가져옴
+            String title=c.getString(title_pos);
+            String time=c.getString(time_pos);
+            String site=c.getString(site_pos);
+            String views=c.getString(viewsa_pos);
+            String siteaddress=c.getString(siteaddress_pos);
+            int star=c.getInt(star_pos);
+            SearchData newData = new SearchData(title, time, site, views, siteaddress);
+            if(star%2==1) newData.setImageResid(R.drawable.star2);
+
+            mlist.add(newData);
+        }
+        db.close();
+        recyclerView.setAdapter(adapter);
+
     }
 
     @Override
@@ -498,79 +505,44 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
         }
     }
 
-
-
-    public void insertDB(View view){
-        DBHelper helper = new DBHelper(mainActivity);
-        SQLiteDatabase db= helper.getWritableDatabase();
-        String sql = "insert into SearchDataTable (title, time, site, views, siteaddress) values (?, ?, ?, ?, ?)";
-
-        //데이터준비
-        String [] arg1={"문자열1", "100", "11.11", "dasd","adas"};
-        String [] arg2={"문자열2", "200", "22.22", "ad","asd"};
-
-        db.execSQL(sql,arg1);
-        db.execSQL(sql,arg2);
-        db.close();
-    }
-    public void selectDB(View view){
-        DBHelper helper = new DBHelper(mainActivity);
+    public void searchFilter(String filterTitle){
+        Log.d("test","searchFilter호출:"+filterTitle);
+        DBHelper helper = new DBHelper(mainActivity,SearchDataTable);
         SQLiteDatabase db= helper.getWritableDatabase();
 
-        //"select 컬럼명들 from 테이블명 where 조건절 group by 기준컬럼 having 조건절 order by 컬럼명"
-        String sql="select * from SearchDataTable";
-
+        String sql="select * from SearchDataTable where title LIKE ('%"+filterTitle+"%')order by time DESC";
         //쿼리실행
         Cursor c =db.rawQuery(sql,null);
-
+        mlist=new ArrayList<>();
+        adapter = new DataAdapeter(mlist,getContext().getApplicationContext());
+        Log.d("test","mlist 초기화");
         //선택된 로우 끝까지 반복하며 데이터
         while(c.moveToNext()){
             //가져올 컬럼의 인덱스 번호를 가져옴
-            //int idx_pos=c.getColumnIndex("idx");
             int title_pos=c.getColumnIndex("title");
             int time_pos=c.getColumnIndex("time");
             int site_pos=c.getColumnIndex("site");
             int viewsa_pos=c.getColumnIndex("views");
             int siteaddress_pos=c.getColumnIndex("siteaddress");
+            int star_pos=c.getColumnIndex("star");
 
             //컬럼 인덱스번호를 통해데이터를 가져옴
-            //int idx=c.getInt(idx_pos);
             String title=c.getString(title_pos);
             String time=c.getString(time_pos);
             String site=c.getString(site_pos);
             String views=c.getString(viewsa_pos);
             String siteaddress=c.getString(siteaddress_pos);
-
-            SearchData newData= new SearchData(title,time,site,views,siteaddress);
-
-
+            int star=c.getInt(star_pos);
+            SearchData newData = new SearchData(title, time, site, views, siteaddress);
+            if(star%2==1) newData.setImageResid(R.drawable.star2);
+            Log.d("test",filterTitle+" IN "+title);
+            mlist.add(newData);
         }
-    }
-
-
-    public void updateDB(View view) {
-        DBHelper helper = new DBHelper(mainActivity);
-        SQLiteDatabase db= helper.getWritableDatabase();
-        String sql="update TestTable set textData = ? where idx = ?";
-        //update 테이블명 set 컬럼=값 where 조건절
-
-
-        String [] args={"문자열3","1"};
-
-        db.execSQL(sql,args);
         db.close();
+        recyclerView.setAdapter(adapter);
     }
-    public void deleteDB(View view) {
-        DBHelper helper = new DBHelper(mainActivity);
-        SQLiteDatabase db= helper.getWritableDatabase();
-        String sql="delete from TestTable where idx = ?";
-        //delete from 테이블명 where 조건절
 
-        String[] args={"1"};
 
-        db.execSQL(sql,args);
-        db.close();
-    }
 
 
 

@@ -22,14 +22,7 @@ public class DataAdapeter extends RecyclerView.Adapter<DataAdapeter.ViewHolder> 
     OnDataClickListener listener;
 
 
-    public boolean isExist(String strName){//중복되는 공지사항 이름때문에 내가 구글링해서 넣은거
-        for (int i = 0; i < datas.size(); i++) {//단점은 O(n^2)으로 오래걸리게하는거같음
-            if (datas.get(i).title.equals(strName)) {
-                return true;
-            }
-        }
-        return false;
-    }
+
     public void Deduplication(){//내가 위에꺼 수정해서 만든거//정렬후에 실행해야함
         for(int i=0; i<datas.size()-1;i++){
             int iplus=i+1;
@@ -45,11 +38,9 @@ public class DataAdapeter extends RecyclerView.Adapter<DataAdapeter.ViewHolder> 
     }
 
 
-    public void removeAll(String input){
-        for(int i=datas.size()-1;i>-1;i--){
-            if(datas.get(i).title.equals(input))
-                datas.remove(i);
-        }
+    public void removeAll(){
+        for(int i=datas.size()-1;i>-1;i--)
+            datas.remove(i);
     }
 
 
@@ -126,6 +117,7 @@ public class DataAdapeter extends RecyclerView.Adapter<DataAdapeter.ViewHolder> 
         TextView views;
         ImageView farovites;
 
+
         OnDataClickListener listener;
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -148,6 +140,18 @@ public class DataAdapeter extends RecyclerView.Adapter<DataAdapeter.ViewHolder> 
                 @Override
                 public void onClick(View v) {
                     int position = getAdapterPosition();
+
+                    int imgTag=(Integer) farovites.getTag();
+                    switch (imgTag){
+                        case R.drawable.star:
+                            farovites.setImageResource(R.drawable.star2);
+                            farovites.setTag(R.drawable.star2);
+                            break;
+                        case R.drawable.star2:
+                            farovites.setImageResource(R.drawable.star);
+                            farovites.setTag(R.drawable.star);
+                            break;
+                    }
                     if(listener!=null){
                         listener.onStarClick(ViewHolder.this, v, position);
                     }
@@ -162,7 +166,8 @@ public class DataAdapeter extends RecyclerView.Adapter<DataAdapeter.ViewHolder> 
             time.setText(data.getTime());
             site.setText(data.getSite());
             views.setText(data.getViews());
-            farovites.setImageResource(R.drawable.star);
+            farovites.setImageResource(data.getImageResid());
+            farovites.setTag(data.getImageResid());
         }
 
         public void setOnDataClickListner(OnDataClickListener listener){

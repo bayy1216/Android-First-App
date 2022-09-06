@@ -6,8 +6,8 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 public class DBHelper extends SQLiteOpenHelper {
-    public DBHelper(Context context){
-        super(context,"Test.db",null,1);
+    public DBHelper(Context context,String name){
+        super(context,name,null,1);
     }
 
     @Override
@@ -15,15 +15,26 @@ public class DBHelper extends SQLiteOpenHelper {
         Log.d("test","데이터베이스가 생성되었습니다");
 
         String sql="create table SearchDataTable("
-                + "idx integer primary key autoincrement, "
-                + "title text not null, "
+                + "title text primary key, "
                 + "time text not null, "
                 + "site text not null, "
+                + "siteCode text not null, "
                 + "views text not null, "
-                + "siteaddress text not null"
+                + "siteaddress text not null, "
+                + "star integer default 0"
                 + ")";
 
         db.execSQL(sql);
+
+
+
+
+
+        String sql3="CREATE TABLE AlarmTable("
+                +"word text primary key, "
+                +"date text not null"
+                + ")";
+        db.execSQL(sql3);
     }
 
     @Override

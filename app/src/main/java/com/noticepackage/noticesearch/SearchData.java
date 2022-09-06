@@ -1,5 +1,7 @@
 package com.noticepackage.noticesearch;
 
+import com.example.noticesearch.R;
+
 import java.io.Serializable;
 import java.util.Comparator;
 
@@ -26,7 +28,16 @@ public class SearchData implements Serializable {
         this.site = site;
         this.views = views;
         this.siteaddress = siteaddress;
+        this.imageResid= R.drawable.star;
+    }
 
+    public SearchData(String title, String time, String site, String views, String siteaddress, int imageResid) {
+        this.title = title;
+        this.time = time;
+        this.site = site;
+        this.views = views;
+        this.siteaddress = siteaddress;
+        this.imageResid= imageResid;
     }
 
     public String getTitle() {

@@ -52,7 +52,6 @@ public class Setting1Fragment extends Fragment{
             @Override
             public void onClick(View v) {
                 mainActivity.changeFrag(4);
-                mainActivity.delFrag(3);
             }
         });
 
@@ -63,6 +62,7 @@ public class Setting1Fragment extends Fragment{
             DataInputStream dis = new DataInputStream(fis);
             code = dis.readInt();
             Log.d("test", "저장된code" + code);
+            dis.close();
         }catch(Exception e){
             Log.d("test", "실패");
         }
@@ -86,6 +86,8 @@ public class Setting1Fragment extends Fragment{
 
         @Override
         public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            mainActivity.delFrag(3);
+
             if (isChecked) code += Math.pow(2, index);
             else code -= Math.pow(2, index);
 

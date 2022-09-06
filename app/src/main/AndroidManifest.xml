@@ -22,11 +22,6 @@
             android:enabled="true"
             android:exported="true" />
 
-        <service
-            android:name="com.noticepackage.noticesearch.UpdateService"
-            android:enabled="true"
-            android:exported="true" />
-
         <activity
             android:name="com.noticepackage.noticesearch.MainActivity"
             android:exported="true">

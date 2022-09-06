@@ -5,6 +5,8 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -55,7 +57,7 @@ public class Menu2Fragment extends Fragment {
 
 
     ArrayList<SearchData> starlist;
-    public String starfile ="list_star.tmp";
+    public String SearchDataTable="SearchDataTable.db";
     private AdView mAdViewFrag2;
 
 
@@ -81,19 +83,7 @@ public class Menu2Fragment extends Fragment {
         adapter = new DataAdapeter(starlist,getContext().getApplicationContext());
 
 
-
-        try {
-            FileInputStream fis = getContext().openFileInput(starfile);
-            ObjectInputStream ois = new ObjectInputStream(fis);
-            starlist = (ArrayList<SearchData>) ois.readObject();
-            ois.close();
-            Log.d("test","star리스트 불러옴");
-            adapter.addDatas(starlist);
-        }catch(Exception e){
-            Log.d("test", "프래그2에서 저장 파일 열기 실패");
-        }
-
-        recyclerView.setAdapter(adapter);
+        loadCurrentStar();
 
 
         MobileAds.initialize(getContext(), new OnInitializationCompleteListener() {
@@ -109,13 +99,6 @@ public class Menu2Fragment extends Fragment {
 
 
 
-
-
-
-
-
-
-
         adapter.setOnDataClickListener(new DataAdapeter.OnDataClickListener() {
             @Override
             public void onItemClick(DataAdapeter.ViewHolder holder, View view, int position) {
@@ -125,63 +108,70 @@ public class Menu2Fragment extends Fragment {
             }
             @Override
             public void onStarClick(DataAdapeter.ViewHolder holder, View view, int position) {
+                mainActivity.delFrag(3);
                 SearchData newstardata = adapter.getData(position);
-
                 Log.d("test",newstardata.getTitle());
+                String title=newstardata.getTitle();
 
                 starlist.remove(position);
-                try {
-                    Log.d("test", "저장 시도");
-                    FileOutputStream fos = getContext().openFileOutput(starfile, Context.MODE_PRIVATE);
-                    ObjectOutputStream oos = new ObjectOutputStream(fos);
-
-                    oos.writeObject(starlist);
-                    Log.d("test", "저장완료");
-
-                    oos.close();
-                }
-                catch (Exception e) {
-                    Log.d("test","저장 실패");
-                    e.printStackTrace();
-                }
                 recyclerView.setAdapter(adapter);
+
+                DBHelper helper = new DBHelper(mainActivity,SearchDataTable);
+                SQLiteDatabase db= helper.getWritableDatabase();
+
+                String sql = "update SearchDataTable set star = star+1 where title = ?";
+
+                String[] args={title};
+                db.execSQL(sql,args);
+                db.close();
+
             }
         });
-
-
-
-
-
-
-
-
 
         return rootview;
     }
 
+    public void loadCurrentStar() {
+        Log.d("test","loadCurrentStar호출");
+        DBHelper helper = new DBHelper(mainActivity,SearchDataTable);
+        SQLiteDatabase db= helper.getWritableDatabase();
 
 
+        //"select 컬럼명들 from 테이블명 where 조건절 group by 기준컬럼 having 조건절 order by 컬럼명"
+        String sql="select * from SearchDataTable order by time DESC";
 
+        //쿼리실행
+        Cursor c =db.rawQuery(sql,null);
 
-/*
-    public void searchFilter(DataAdapeter targetAdapter, String filterTitle){
-        //filteredList = new DataAdapeter(getContext().getApplicationContext());
-        for (int i=0; i<targetAdapter.getItemCount();i++){
-            if(targetAdapter.getData(i).getTitle().contains(filterTitle)){
-                filteredList.addData(new SearchData(targetAdapter.getData(i).getTitle(),
-                        targetAdapter.getData(i).getTime(),
-                        targetAdapter.getData(i).getSite(),
-                        targetAdapter.getData(i).getViews(),
-                        targetAdapter.getData(i).getSiteaddress()));
+        //선택된 로우 끝까지 반복하며 데이터
+        while(c.moveToNext()){
+            int star_pos=c.getColumnIndex("star");
+            int star=c.getInt(star_pos);
+            if(star%2==0) continue;
+            //가져올 컬럼의 인덱스 번호를 가져옴
+            int title_pos=c.getColumnIndex("title");
+            int time_pos=c.getColumnIndex("time");
+            int site_pos=c.getColumnIndex("site");
+            int viewsa_pos=c.getColumnIndex("views");
+            int siteaddress_pos=c.getColumnIndex("siteaddress");
+            //컬럼 인덱스번호를 통해데이터를 가져옴
+            String title=c.getString(title_pos);
+            String time=c.getString(time_pos);
+            String site=c.getString(site_pos);
+            String views=c.getString(viewsa_pos);
+            String siteaddress=c.getString(siteaddress_pos);
 
-                recyclerView.setAdapter(filteredList);
-
-                System.out.println(i);
-            }
+            SearchData newData= new SearchData(title,time,site,views,siteaddress,R.drawable.star2);
+            Log.d("test","star데이터이름="+title);
+            starlist.add(newData);
         }
+        recyclerView.setAdapter(adapter);
+        db.close();
     }
 
-*/
+
+
+
 
 
 }

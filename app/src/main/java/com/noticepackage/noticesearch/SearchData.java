@@ -13,6 +13,15 @@ public class SearchData implements Serializable {
     String siteaddress;
 
     int imageResid;
+    int star;
+
+    public int getStar() {
+        return star;
+    }
+
+    public void setStar(int star) {
+        this.star = star;
+    }
 
     public int getImageResid() {
         return imageResid;
@@ -29,6 +38,7 @@ public class SearchData implements Serializable {
         this.views = views;
         this.siteaddress = siteaddress;
         this.imageResid= R.drawable.star;
+        this.star=2;
     }
 
     public SearchData(String title, String time, String site, String views, String siteaddress, int imageResid) {
@@ -38,6 +48,7 @@ public class SearchData implements Serializable {
         this.views = views;
         this.siteaddress = siteaddress;
         this.imageResid= imageResid;
+        this.star=2;
     }
 
     public String getTitle() {

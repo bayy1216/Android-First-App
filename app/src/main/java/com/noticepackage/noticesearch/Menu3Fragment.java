@@ -117,11 +117,7 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext().getApplicationContext(), LinearLayoutManager.VERTICAL,false);
         recyclerView.setLayoutManager(layoutManager);
 
-        mlist = new ArrayList<>();
-        adapter = new DataAdapeter(mlist,getContext().getApplicationContext());
 
-        Collections.sort(mlist,SearchData.mydata);
-        recyclerView.setAdapter(adapter);
 
         tempProgress = (ProgressBar) rootview.findViewById(R.id.progressBar3);
         addDataHandler = new AddDataHandler();
@@ -153,37 +149,49 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
         });
 
 
-
-        adapter.setOnDataClickListener(new DataAdapeter.OnDataClickListener() {
-            @Override
-            public void onItemClick(DataAdapeter.ViewHolder holder, View view, int position) {
-                SearchData data = adapter.getData(position);
-                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(data.siteaddress));
-                startActivity(intent);
-            }
-            @Override
-            public void onStarClick(DataAdapeter.ViewHolder holder, View view, int position) {
-                mainActivity.delFrag(2);
-                SearchData newstarData = adapter.getData(position);
-                Log.d("test",newstarData.getTitle());
+        adapter.setOnDataClickListener(new frag3Listener(adapter, mainActivity));
 
 
-                DBHelper helper = new DBHelper(mainActivity,SearchDataTable);
-                SQLiteDatabase db= helper.getWritableDatabase();
-
-
-                String sql = "update SearchDataTable set star = star+1 where title = ?";
-                String[] arg={newstarData.getTitle()};
-                db.execSQL(sql,arg);
-
-
-                db.close();
-
-            }
-        });
 
         return rootview;
     }
+
+
+    class frag3Listener implements DataAdapeter.OnDataClickListener{
+        DataAdapeter data_Adapeter;
+        MainActivity main_Activity;
+        frag3Listener(DataAdapeter adapter,MainActivity mainActivity){
+            this.data_Adapeter=adapter;
+            this.main_Activity=mainActivity;
+        }
+        @Override
+        public void onItemClick(DataAdapeter.ViewHolder holder, View view, int position) {
+            SearchData data = data_Adapeter.getData(position);
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(data.siteaddress));
+            startActivity(intent);
+        }
+
+        @Override
+        public void onStarClick(DataAdapeter.ViewHolder holder, View view, int position) {
+            main_Activity.delFrag(2);
+            SearchData newstarData = data_Adapeter.getData(position);
+            Log.d("test",newstarData.getTitle());
+
+
+            DBHelper helper = new DBHelper(main_Activity,SearchDataTable);
+            SQLiteDatabase db= helper.getWritableDatabase();
+
+
+            String sql = "update SearchDataTable set star = star+1 where title = ?";
+            String[] arg={newstarData.getTitle()};
+            db.execSQL(sql,arg);
+
+
+            db.close();
+        }
+    }
+
+
 
     class SearchSiteImproved extends Thread {
         @Override
@@ -385,6 +393,7 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
             String savedDay = dis.readUTF();
             Log.d("test","마지막 저장된 day : "+savedDay);
             if(today.compareTo(savedDay)!=0){//마지막갱신후 1시간 경과시 새로고침
+                loadCurrentGame();
                 Log.d("test",today+"!="+savedDay);
                 tempProgress.setVisibility(View.VISIBLE);
                 searchSiteTherad.start();
@@ -415,9 +424,12 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
         Log.d("test","loadCurrentGame호출");
         DBHelper helper = new DBHelper(mainActivity,SearchDataTable);
         SQLiteDatabase db= helper.getWritableDatabase();
+        mlist=new ArrayList<>();
+        adapter = new DataAdapeter(mlist,getContext().getApplicationContext());
+        adapter.setOnDataClickListener(new frag3Listener(adapter,mainActivity));
 
         try {
-            FileInputStream fis = getContext().openFileInput("permission_save.tmp");
+            FileInputStream fis = getContext().openFileInput(recentTimeFile);
             DataInputStream dis = new DataInputStream(fis);
             siteCode = dis.readInt();
             dis.close();
@@ -437,7 +449,7 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
         String sql="select * from SearchDataTable where siteCode NOT IN ("+exceptSite+")order by time DESC";
         //쿼리실행
         Cursor c =db.rawQuery(sql,null);
-
+        Log.d("test","DB에서 사이트제외 select");
         //선택된 로우 끝까지 반복하며 데이터
         while(c.moveToNext()){
             //가져올 컬럼의 인덱스 번호를 가져옴
@@ -457,9 +469,13 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
             int star=c.getInt(star_pos);
             SearchData newData = new SearchData(title, time, site, views, siteaddress);
             if(star%2==1) newData.setImageResid(R.drawable.star2);
+            if(star==0)//DB에서 star이 0이면 list에0으로 추가
+                newData.setStar(0);
+
 
             mlist.add(newData);
         }
+        db.execSQL("update SearchDataTable set star = 2 where star = 0");
         db.close();
         recyclerView.setAdapter(adapter);
 
@@ -515,6 +531,7 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
         Cursor c =db.rawQuery(sql,null);
         mlist=new ArrayList<>();
         adapter = new DataAdapeter(mlist,getContext().getApplicationContext());
+        adapter.setOnDataClickListener(new frag3Listener(adapter,mainActivity));
         Log.d("test","mlist 초기화");
         //선택된 로우 끝까지 반복하며 데이터
         while(c.moveToNext()){

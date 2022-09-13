@@ -63,16 +63,15 @@ public class Menu1Fragment extends Fragment {
     SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
     String today=sdf.format(nowDate);
 
+    SimpleDateFormat sdfNow = new SimpleDateFormat("MM월dd일-hh시mm분ss초");
+    String todayNow=sdfNow.format(nowDate);
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         ViewGroup rootview = (ViewGroup) inflater.inflate(R.layout.fragment_menu1, container,false);
-
         btnAlarm = (Button) rootview.findViewById(R.id.btn_alarm_start);
         textAlarm = (EditText) rootview.findViewById(R.id.alarm_keyword);
-
-
 
         recyclerView = (RecyclerView) rootview.findViewById(R.id.recyclerView_menu1);
         LinearLayoutManager layoutManager = new LinearLayoutManager(getContext().getApplicationContext(), LinearLayoutManager.VERTICAL,false);
@@ -86,17 +85,11 @@ public class Menu1Fragment extends Fragment {
             ObjectInputStream ois = new ObjectInputStream(fis);
             keylist = (ArrayList<KeyWord>) ois.readObject();
             keyWordAdapter.setList(keylist);
-
-
             ois.close();
         }catch(Exception e){
             Log.d("test", "keyList 열기 실패");
         }
-
-
         recyclerView.setAdapter(keyWordAdapter);
-
-
 
         MobileAds.initialize(getContext(), new OnInitializationCompleteListener() {
             @Override
@@ -117,20 +110,14 @@ public class Menu1Fragment extends Fragment {
 
 
 
-
-
-
         Intent xx= new Intent(getActivity(), MyReceiver.class);
         AlarmManager alarmManager = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(getContext(), 0, xx, PendingIntent.FLAG_MUTABLE);
 
-
-        if (pendingIntent != null && alarmManager != null) {
+        if (pendingIntent != null && alarmManager != null && keylist.isEmpty()) {//key모두 제거시 알람매니저 취소
             alarmManager.cancel(pendingIntent);
+            Log.d("test", "alarmManger 취소하였음");
         }
-
-
-
 
         btnAlarm.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -141,26 +128,22 @@ public class Menu1Fragment extends Fragment {
                     ObjectOutputStream oos = new ObjectOutputStream(fos);
                     oos.writeObject(keylist);
 
-                    Log.d("test", "keyLsit 저장완료");
+                    Log.d("test", "keyListFILE 저장완료");
                     oos.close();
                 }catch(Exception e){
-                    Log.d("test", "keyword실패");
+                    Log.d("test", "keyListFILE 저장실패");
                 }
-
-
-                if(alarmManager!=null) {
+                recyclerView.setAdapter(keyWordAdapter);
+                if(alarmManager!=null) {//알람메니저 시작하게함 myreceiver로
                     alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP,
                             System.currentTimeMillis(),
                             AlarmManager.INTERVAL_DAY, pendingIntent);
-                    Log.d("test","일단시작"+System.currentTimeMillis());
-                    Toast.makeText(getContext(), "start", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Alarm start,not implemented", Toast.LENGTH_SHORT).show();
+                    Log.d("test","alarmManger호출 currTime: "+todayNow);
                 }
                 else{
                     Log.d("test","null이라는데요");
                 }
-
-
-
             }
         });
 
@@ -169,6 +152,17 @@ public class Menu1Fragment extends Fragment {
             public void onItemClick(KeyWordAdapter.ViewHolder holder, View view, int position) {
                 keyWordAdapter.removeData(position);
                 recyclerView.setAdapter(keyWordAdapter);
+                try {
+                    FileOutputStream fos = getContext().openFileOutput("keyWord_List.tmp", Context.MODE_PRIVATE);
+                    ObjectOutputStream oos = new ObjectOutputStream(fos);
+                    oos.writeObject(keylist);
+
+                    Log.d("test", "keyListFILE 저장완료");
+                    oos.close();
+                }catch(Exception e){
+                    Log.d("test", "keyListFILE 저장실패");
+                }
+
             }
         });
 

@@ -75,6 +75,8 @@ public class Setting1Fragment extends Fragment{
         switch1.setOnCheckedChangeListener(new MyLisener(0));
         switch2.setOnCheckedChangeListener(new MyLisener(1));
         switch3.setOnCheckedChangeListener(new MyLisener(2));
+
+
         return rootview;
     }
 

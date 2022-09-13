@@ -41,7 +41,10 @@ public class DBHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         switch (oldVersion){
             case 1:
+                String sql="ALTER TABLE SearchDataTable ADD COLUMN alarmCheck integer default 0";
                 //1에서 2로 테이블구조를 변경
+
+                db.execSQL(sql);
             case 2:
                 //2에서 3로
             case 3:

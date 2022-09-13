@@ -1,6 +1,7 @@
 package com.noticepackage.noticesearch;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -80,7 +81,9 @@ public class DataAdapeter extends RecyclerView.Adapter<DataAdapeter.ViewHolder> 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         SearchData data = datas.get(position);
-        holder.onBindData(data);
+
+
+        holder.onBindData(data, data.getStar());
 
         holder.setOnDataClickListner(listener);
 
@@ -161,13 +164,15 @@ public class DataAdapeter extends RecyclerView.Adapter<DataAdapeter.ViewHolder> 
 
         }
 
-        public void onBindData(SearchData data){
+        public void onBindData(SearchData data,int star){
             title.setText(data.getTitle());
             time.setText(data.getTime());
             site.setText(data.getSite());
             views.setText(data.getViews());
             farovites.setImageResource(data.getImageResid());
             farovites.setTag(data.getImageResid());
+            if(star==0)
+                title.setTextColor(0x99FF0000);
         }
 
         public void setOnDataClickListner(OnDataClickListener listener){

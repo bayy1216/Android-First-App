@@ -46,7 +46,7 @@ public class AlarmIntentService extends IntentService {
 
 
         new Intent(this, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), PendingIntent.FLAG_MUTABLE);
 
         Bitmap mLargeIconForNoti = BitmapFactory.decodeResource(this.getResources(),R.drawable.knu);
 

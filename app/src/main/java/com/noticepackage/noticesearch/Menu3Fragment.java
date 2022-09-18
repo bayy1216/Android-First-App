@@ -44,48 +44,21 @@ import java.util.Date;
 
 
 public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefreshListener {
-
     RecyclerView recyclerView;
     DataAdapeter adapter;
     ArrayList<SearchData> mlist;
-
     AddDataHandler addDataHandler;
-    SearchSiteTherad searchSiteTherad;
-    SearchSiteImproved searchSiteImproved;
-
-    String dataTitle; String dataTime; String dataView; String viewPageUrl;
-
-    private final String[] SWURL={"https://swedu.knu.ac.kr/05_sub/01_sub.html",
-            "https://swedu.knu.ac.kr/05_sub/02_sub.html",
-            "https://swedu.knu.ac.kr/05_sub/10_sub.html",
-            "https://swedu.knu.ac.kr/05_sub/03_sub.html",
-            "https://swedu.knu.ac.kr/05_sub/09_sub.html",
-            "https://swedu.knu.ac.kr/02_sub/04_sub.html"};
-    private final String[] SWname={"sw중심대학지원산업","지역선도대학산업","경북디지털역량교육","소프트웨어교육원새소식","마일리지게시판","sw기초교육"};
-
-    private final String[] KNUURL = {"https://www.knu.ac.kr/wbbs/wbbs/bbs/btin/list.action?bbs_cde=1&menu_idx=67",
-                            "https://www.knu.ac.kr/wbbs/wbbs/bbs/btin/stdList.action?menu_idx=42"};
-    private final String[] KNUname={"경북대","경북대학사공지"};
-
-    private final String[] CSEname={"컴학","컴학-학사","컴학-심컴","컴학-학부인재"};
-    private final String[] CSEURL ={"http://computer.knu.ac.kr/06_sub/02_sub.html",
-            "http://computer.knu.ac.kr/06_sub/02_sub_2.html",
-            "http://computer.knu.ac.kr/06_sub/02_sub_3.html","http://computer.knu.ac.kr/06_sub/04_sub.html"};
-
+    GetSiteThread getSiteThread;
 
     private int tempvalue;
     private int tempaAdder = 100/(12);
 
-    public String dateControl="20220301";
 
     private double tempvalueD;
     private double tempAdderD=100.0/288;
 
 
     ProgressBar tempProgress;
-
-
-
 
     SwipeRefreshLayout swipeRefreshLayout;
 
@@ -118,25 +91,18 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
         recyclerView.setLayoutManager(layoutManager);
 
 
-
         tempProgress = (ProgressBar) rootview.findViewById(R.id.progressBar3);
         addDataHandler = new AddDataHandler();
-
-
-        searchSiteTherad = new SearchSiteTherad();
-        searchSiteImproved=new SearchSiteImproved();
 
         swipeRefreshLayout = rootview.findViewById(R.id.swipeLayout);
         swipeRefreshLayout.setOnRefreshListener(this);
 
 
-
-
+        getSiteThread = new GetSiteThread(getContext(),addDataHandler);
 
         initload();
 
         EditText edText=(EditText)rootview.findViewById(R.id.searchText);
-
         edText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
@@ -147,9 +113,6 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                 searchFilter(edText.getText().toString());
             }
         });
-
-
-        adapter.setOnDataClickListener(new frag3Listener(adapter, mainActivity));
 
 
 
@@ -170,29 +133,24 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(data.siteaddress));
             startActivity(intent);
         }
-
         @Override
         public void onStarClick(DataAdapeter.ViewHolder holder, View view, int position) {
             main_Activity.delFrag(2);
             SearchData newstarData = data_Adapeter.getData(position);
             Log.d("test",newstarData.getTitle());
 
-
             DBHelper helper = new DBHelper(main_Activity,SearchDataTable);
             SQLiteDatabase db= helper.getWritableDatabase();
-
 
             String sql = "update SearchDataTable set star = star+1 where title = ?";
             String[] arg={newstarData.getTitle()};
             db.execSQL(sql,arg);
-
-
             db.close();
         }
     }
 
 
-
+/*
     class SearchSiteImproved extends Thread {
         @Override
         public void run() {
@@ -231,131 +189,7 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
             }
         }
     }
-
-
-    class SearchSiteTherad extends Thread{
-        @Override
-        public void run() {
-            DBHelper helper = new DBHelper(mainActivity,SearchDataTable);
-            SQLiteDatabase db= helper.getWritableDatabase();
-            String sql = "insert into SearchDataTable (title, time, site, siteCode, views, siteaddress) values (?, ?, ?, ?, ?, ?)";
-
-            Document doc;
-            try {
-                tempvalue = 0;
-                int x;
-
-                for (x=0;x<CSEURL.length;x++) {
-                    tempvalue += tempaAdder;
-                    addDataHandler.sendEmptyMessage(0);
-
-                    doc = Jsoup.connect(CSEURL[x]).get();
-                    Elements cseElements = doc.select("tbody tr");
-
-                    for (Element elem : cseElements) {
-                        dataTitle = elem.select("a").first().ownText();
-                        viewPageUrl = elem.select("a").attr("abs:href");
-                        dataTime = elem.select("td.bbs_date").first().text();
-                        dataView = elem.select("td.bbs_hit").first().ownText();
-                        String ss = dataTime.replaceAll("[^\\d]", "");
-                        if (Integer.parseInt(ss) < Integer.parseInt(dateControl)) {
-                            continue;
-                        }
-
-                        String [] arg1={dataTitle, dataTime, CSEname[x], "CSE","조회수:" + dataView, viewPageUrl};
-                        try {
-                            db.execSQL(sql, arg1);
-                        }catch (Exception e){}
-
-                        try {
-                            Thread.sleep(1);
-                        }
-                        catch (Exception e) {e.printStackTrace();
-                        }
-                    }
-                }
-
-                for (x=0;x<KNUURL.length;x++) {
-                    tempvalue += tempaAdder;
-                    addDataHandler.sendEmptyMessage(0);
-
-                    doc = Jsoup.connect(KNUURL[x]).get();
-                    Elements knuElements = doc.select("tbody tr");
-
-                    for (Element elem : knuElements) {
-                        dataTitle = elem.select("a").first().ownText();
-                        if(x==0) viewPageUrl = elem.select("a").attr("abs:href");
-                        else{//url이 자바관련 이라서 학사공지탭으로 이동
-                            viewPageUrl="https://www.knu.ac.kr/wbbs/wbbs/bbs/btin/stdList.action?menu_idx=42";
-                        }
-                        dataTime = elem.select("td.date").first().text();
-                        dataView = elem.select("td.hit").first().ownText();
-                        String ss = dataTime.replaceAll("[^\\d]", "");
-                        if (Integer.parseInt(ss) < Integer.parseInt(dateControl)){
-                            continue;
-                        }
-
-                        String [] arg1={dataTitle, dataTime, KNUname[x], "KNU","조회수:" + dataView, viewPageUrl};
-                        try {
-                            db.execSQL(sql, arg1);
-                        }catch (Exception e){}
-                        try {
-                            Thread.sleep(1);
-                        }
-                        catch (Exception e) {e.printStackTrace();
-                        }
-                    }
-                }
-                for (x = 0; x < SWURL.length; x++) {
-                    tempvalue += tempaAdder;
-                    addDataHandler.sendEmptyMessage(0);
-
-                    doc = Jsoup.connect(SWURL[x]).get();
-                    Elements elements = doc.select("tbody tr");
-
-                    for (Element elem : elements) {
-                        dataTitle = elem.select("td.l").first().text();
-                        viewPageUrl = elem.select("a").attr("abs:href");
-                        dataTime = elem.select("td").get(4).text();
-                        dataView = elem.select("td").get(5).text();
-                        String ss = dataTime.replaceAll("[^\\d]", "");
-                        if (Integer.parseInt(ss) < Integer.parseInt(dateControl)) {
-                            continue;
-                        }
-                        String [] arg1={dataTitle, dataTime, SWname[x], "SW","조회수:" + dataView, viewPageUrl};
-                        try {
-                            db.execSQL(sql, arg1);
-                        }catch (Exception e){}
-
-                        try {
-                            Thread.sleep(1);
-                        }
-                        catch (Exception e) {e.printStackTrace();
-                        }
-                    }
-                }
-                db.close();
-
-                try{
-                    FileOutputStream fos = getContext().openFileOutput(recentTimeFile, Context.MODE_PRIVATE);
-                    DataOutputStream dos = new DataOutputStream(fos);
-                    dos.writeUTF(today);
-                    Log.d("test","today-save--"+today);
-                    dos.close();
-                }catch(Exception e){
-                    Log.d("test","파일로 날짜 저장중 오류");
-                }
-                Log.d("test","쓰레드 종료!!!");
-                addDataHandler.sendEmptyMessage(2);
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-
-    }
-
+*/
     class AddDataHandler extends Handler{
         //개발자가  발생시킨 쓰레드에서 화면에 관련된 처리를 하기위해
         //작업을 요청하면 자동으로 호출되는 메서드. 메인쓰레드에서 하게된다.
@@ -365,6 +199,7 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
 
             switch(msg.what){
                 case 0:
+                    tempvalue += tempaAdder;
                     tempProgress.setProgress(tempvalue);
                     break;
                 case 1:
@@ -378,11 +213,10 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                 case 3:
                     tempProgress.setProgress((int)tempvalueD);
                     break;
-
+                case 4:
+                    tempvalue=0;
+                    break;
             }
-
-
-
         }
     }
 
@@ -396,7 +230,7 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                 loadCurrentGame();
                 Log.d("test",today+"!="+savedDay);
                 tempProgress.setVisibility(View.VISIBLE);
-                searchSiteTherad.start();
+                getSiteThread.start();
             }
             else{
                 Log.d("test","1시간 안지나서 불러옴");
@@ -412,7 +246,7 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
                 dos.writeUTF(today);
                 Log.d("test","today-save--"+today);
                 dos.close();
-                searchSiteTherad.start();
+                getSiteThread.start();
             }catch(Exception ee){
                 Log.d("test","파일로 첫설치 날짜 저장중 오류");
             }
@@ -471,11 +305,12 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
             if(star%2==1) newData.setImageResid(R.drawable.star2);
             if(star==0)//DB에서 star이 0이면 list에0으로 추가
                 newData.setStar(0);
-
+            else if(star==-2)
+                newData.setStar(-2);
 
             mlist.add(newData);
         }
-        db.execSQL("update SearchDataTable set star = 2 where star = 0");
+        db.execSQL("update SearchDataTable set star = 2 where star <= 0");
         db.close();
         recyclerView.setAdapter(adapter);
 
@@ -483,43 +318,38 @@ public class Menu3Fragment extends Fragment implements SwipeRefreshLayout.OnRefr
 
     @Override
     public void onRefresh() {
-        updateLayoutView();//새로 고침 코드
+        updateLayoutView(getSiteThread);//새로 고침 코드
         swipeRefreshLayout.setRefreshing(false);//새로 고침 완
     }
 
-    public void updateLayoutView(){// 당겨서 새로고침 했을 때 뷰 변경 메서드
+    public void updateLayoutView(GetSiteThread th){// 당겨서 새로고침 했을 때 뷰 변경 메서드
         try{
-            if(searchSiteTherad.isAlive()){
-                searchSiteTherad.interrupt();
+            if(th.isAlive()){
+                th.interrupt();
             }
-            searchSiteTherad = new SearchSiteTherad();
+            th = new GetSiteThread(getContext(),addDataHandler);
             Log.d("test","swap->update");
             tempProgress.setVisibility(View.VISIBLE);
-            searchSiteTherad.start();
+            th.start();
         } catch(Exception e){
 
         }
     }
-    public void updateLayoutViewImproved(){
+    /*
+    public void updateLayoutViewImproved(SearchSiteImproved th){
         try{
-            if(searchSiteImproved.isAlive()){
-                searchSiteImproved.interrupt();
+            if(th.isAlive()){
+                th.interrupt();
             }
-            searchSiteImproved = new SearchSiteImproved();
+            th = new SearchSiteImproved();
             Log.d("test","swap->update");
             tempProgress.setVisibility(View.VISIBLE);
 
-            searchSiteImproved.start();
+            th.start();
         } catch(Exception e){
-            if(searchSiteTherad.isAlive()){
-                searchSiteTherad.interrupt();
-            }
-            searchSiteTherad = new SearchSiteTherad();
-            Log.d("test","swap->update");
-            tempProgress.setVisibility(View.VISIBLE);
-            searchSiteTherad.start();
+            updateLayoutView(getSiteThread);
         }
-    }
+    }*/
 
     public void searchFilter(String filterTitle){
         Log.d("test","searchFilter호출:"+filterTitle);

@@ -52,6 +52,12 @@
             android:background="#10000000"
             android:text="게시물 목록 바꾸기" />
 
+        <Switch
+            android:id="@+id/switch4"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="새로운 글 알림" />
+
     </LinearLayout>
 
     <LinearLayout
@@ -64,7 +70,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="앱버전: 1.4.2" />
+            android:text="앱버전: 1.5.0" />
 
     </LinearLayout>
 </LinearLayout>

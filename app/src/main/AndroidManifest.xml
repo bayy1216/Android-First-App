@@ -21,7 +21,10 @@
             android:name="com.noticepackage.noticesearch.MyReceiver"
             android:enabled="true"
             android:exported="true" />
-
+        <receiver
+            android:name="com.noticepackage.noticesearch.TestReceiver"
+            android:enabled="true"
+            android:exported="true" />
         <activity
             android:name="com.noticepackage.noticesearch.MainActivity"
             android:exported="true">

@@ -173,6 +173,8 @@ public class DataAdapeter extends RecyclerView.Adapter<DataAdapeter.ViewHolder> 
             farovites.setTag(data.getImageResid());
             if(star==0)
                 title.setTextColor(0x99FF0000);
+            else if(star==-2)
+                title.setTextColor(0x99FFFF00);
         }
 
         public void setOnDataClickListner(OnDataClickListener listener){

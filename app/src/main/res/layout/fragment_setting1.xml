@@ -29,4 +29,6 @@
         android:layout_height="48dp"
         android:text="경북대 공지 숨기기" />
 
+
+
 </LinearLayout>

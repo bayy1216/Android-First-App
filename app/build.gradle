@@ -9,8 +9,8 @@ android {
         applicationId "com.noticepackage.noticesearch"
         minSdk 21
         targetSdk 31
-        versionCode 11
-        versionName "1.4.2"
+        versionCode 13
+        versionName "1.5.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -31,7 +31,7 @@ dependencies {
     implementation 'org.jsoup:jsoup:1.11.3'
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.1.0" //당겨서 새로고침
     implementation 'com.google.android.gms:play-services-ads:21.0.0'
-
+    implementation 'androidx.work:work-runtime:2.7.1'//리시버에서 오류나는거같아서 추가
 
     implementation 'androidx.appcompat:appcompat:1.4.1'
     implementation 'com.google.android.material:material:1.6.0'

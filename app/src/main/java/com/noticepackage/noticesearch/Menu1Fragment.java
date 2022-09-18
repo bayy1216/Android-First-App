@@ -109,16 +109,6 @@ public class Menu1Fragment extends Fragment {
 
 
 
-
-        Intent xx= new Intent(getActivity(), MyReceiver.class);
-        AlarmManager alarmManager = (AlarmManager) getContext().getSystemService(Context.ALARM_SERVICE);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(getContext(), 0, xx, PendingIntent.FLAG_MUTABLE);
-
-        if (pendingIntent != null && alarmManager != null && keylist.isEmpty()) {//key모두 제거시 알람매니저 취소
-            alarmManager.cancel(pendingIntent);
-            Log.d("test", "alarmManger 취소하였음");
-        }
-
         btnAlarm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -134,16 +124,8 @@ public class Menu1Fragment extends Fragment {
                     Log.d("test", "keyListFILE 저장실패");
                 }
                 recyclerView.setAdapter(keyWordAdapter);
-                if(alarmManager!=null) {//알람메니저 시작하게함 myreceiver로
-                    alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP,
-                            System.currentTimeMillis(),
-                            AlarmManager.INTERVAL_DAY, pendingIntent);
-                    Toast.makeText(getContext(), "Alarm start,not implemented", Toast.LENGTH_SHORT).show();
-                    Log.d("test","alarmManger호출 currTime: "+todayNow);
-                }
-                else{
-                    Log.d("test","null이라는데요");
-                }
+
+
             }
         });
 
